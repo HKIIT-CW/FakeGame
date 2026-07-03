@@ -91,11 +91,11 @@
                 </div>
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-full bg-cyan-950 flex items-center justify-center text-cyan-400 border border-cyan-500/20 shrink-0">
-                        <i class="fa-solid fa-face-laugh-beam text-xs"></i>
+                        <i class="fa-solid fa-brain text-xs"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-slate-200 font-sans">無障礙動態偵測引擎</h4>
-                        <p class="text-xs text-slate-400 font-sans">內建高速運動對比與人體幾何鎖定算法，不需下載笨重 AI 檔案，隨開隨鎖定！</p>
+                        <h4 class="font-bold text-slate-200 font-sans">雙模 AI 偵測與鎖定技術</h4>
+                        <p class="text-xs text-slate-400 font-sans">整合原生瀏覽器 FaceDetector API。支援硬體加速人臉識別，無縫切換備份動態感應雷達！</p>
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
@@ -112,7 +112,7 @@
             <button id="start-btn" class="scifi-font w-full py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:opacity-90 rounded-xl font-bold tracking-wider text-white text-lg shadow-lg shadow-pink-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-face-viewfinder"></i> 啟動人類偵測雷達
             </button>
-            <p class="text-[10px] text-slate-500 mt-4 text-center">若瀏覽器拒絕相機權限，系統會自動切換為「模擬雷達模式」，無需擔心無法遊玩！</p>
+            <p class="text-[10px] text-slate-500 mt-4 text-center">若瀏覽器未開放相機，系統會自動切換為「模擬雷達模式」，直接體驗完整功能！</p>
         </div>
     </div>
 
@@ -152,7 +152,7 @@
         <!-- 輔助鎖定提示 -->
         <div class="flex-grow w-full flex items-center justify-center pointer-events-none">
             <div id="lock-indicator" class="px-4 py-1.5 rounded-full border border-yellow-500/30 bg-yellow-950/40 text-yellow-400 font-bold text-xs tracking-widest uppercase animate-pulse transition-opacity duration-300 opacity-0">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i> LOCK-ON: HUMAN TARGET
+                <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span id="detector-type-text">LOCK-ON: HUMAN TARGET</span>
             </div>
         </div>
 
@@ -178,7 +178,7 @@
                 <!-- 惡搞說明 -->
                 <div class="flex flex-col items-start bg-slate-950/70 border border-slate-800 p-2.5 rounded-xl pointer-events-auto max-w-[200px]">
                     <span class="text-[9px] text-pink-400 tracking-wider font-bold">
-                        <i class="fa-solid fa-circle-info mr-1"></i>操作指南：
+                        <i class="fa-solid fa-circle-info mr-1"></i>偵測核心：
                     </span>
                     <span id="control-info" class="text-[10px] text-slate-300 font-sans font-medium leading-relaxed">
                         對準你前面的朋友！雷達鎖定後按下 [FIRE] 給他迎頭痛擊！
@@ -215,12 +215,18 @@
             overheated: false,
             gameActive: false,
             
+            // 偵測模式狀態
+            detectorMode: 'none', // 'ai' (原生人臉偵測), 'motion' (動態影格像素偵測), 'simulation' (模擬)
+            faceDetectorInstance: null,
+            isAiDetecting: false,
+            lastAiDetectTime: 0,
+
             // 人類目標鎖定狀態
             target: {
                 x: 0,
                 y: 0,
-                width: 0,
-                height: 0,
+                width: 160,       
+                height: 160,
                 locked: false,
                 lockStrength: 0, // 0 到 100
                 funnyLabel: "",
@@ -294,20 +300,21 @@
         const comboContainer = document.getElementById('combo-container');
         const comboDisplay = document.getElementById('combo-display');
         const lockIndicator = document.getElementById('lock-indicator');
+        const detectorTypeText = document.getElementById('detector-type-text');
         const controlInfo = document.getElementById('control-info');
 
         // --- 調整畫布尺寸 ---
         function resizeCanvas() {
             gameCanvas.width = window.innerWidth;
             gameCanvas.height = window.innerHeight;
-            // 比對用隱藏畫布保持低解析度以追求超高速影像運算
+            // 保持低解析度以追求超高速動態影像運算
             hiddenCv.width = 160;
             hiddenCv.height = 120;
         }
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // 搞怪音效合成引擎 (使用 Web Audio API，免加載外部 mp3)
+        // 搞怪音效合成引擎
         class FunnySoundEngine {
             constructor() {
                 this.ctx = null;
@@ -320,14 +327,12 @@
                     this.ctx.resume();
                 }
             }
-            // 滑稽滑音開槍聲 (小丑笛/雷射滑音)
             playShoot() {
                 if (!this.ctx) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 
                 osc.type = 'sawtooth';
-                // 頻率快速上揚再降落，形成極富喜感的效果
                 const now = this.ctx.currentTime;
                 osc.frequency.setValueAtTime(300, now);
                 osc.frequency.exponentialRampToValueAtTime(1000, now + 0.08);
@@ -342,12 +347,10 @@
                 osc.start();
                 osc.stop(now + 0.2);
             }
-            // 尖叫雞/彈簧啵嚶擊中聲
             playExplosion() {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
                 
-                // 1. 尖叫雞的高音尖叫
                 const osc1 = this.ctx.createOscillator();
                 const gain1 = this.ctx.createGain();
                 osc1.type = 'square';
@@ -360,7 +363,6 @@
                 osc1.start();
                 osc1.stop(now + 0.15);
 
-                // 2. 啵嚶彈簧低音
                 const osc2 = this.ctx.createOscillator();
                 const gain2 = this.ctx.createGain();
                 osc2.type = 'triangle';
@@ -373,7 +375,6 @@
                 osc2.start();
                 osc2.stop(now + 0.25);
             }
-            // 整人過熱嘟嘟警報
             playOverheat() {
                 if (!this.ctx) return;
                 const osc = this.ctx.createOscillator();
@@ -391,11 +392,9 @@
                 osc.start();
                 osc.stop(this.ctx.currentTime + 0.12);
             }
-            // 升級成功歡慶搞笑音階
             playLevelUp() {
                 if (!this.ctx) return;
                 const now = this.ctx.currentTime;
-                // 滑稽的小丑大和弦
                 const notes = [261.6, 329.6, 392.0, 523.3, 784.0];
                 notes.forEach((freq, idx) => {
                     const osc = this.ctx.createOscillator();
@@ -419,6 +418,25 @@
 
         // 啟動後置相機鏡頭
         async function initCamera() {
+            // 檢查是否支援原生外型偵測 API (FaceDetector)
+            if ('FaceDetector' in window) {
+                try {
+                    // 實例化原生人臉偵測器，啟用快速模式以利手遊高幀率需求
+                    state.faceDetectorInstance = new FaceDetector({
+                        fastMode: true,
+                        maxDetectedFaces: 2
+                    });
+                    state.detectorMode = 'ai';
+                    controlInfo.innerHTML = "<span class='text-emerald-400'><i class='fa-solid fa-brain mr-1'></i> AI 智慧辨識啟動！</span><br>成功鎖定您朋友的臉部。按下 [FIRE] 給他迎頭痛擊！";
+                } catch (e) {
+                    console.warn("FaceDetector 初始化失敗，將自動使用動態追蹤模式", e);
+                    state.detectorMode = 'motion';
+                }
+            } else {
+                console.info("瀏覽器不支援原生 FaceDetector，改用高性能動態捕捉追蹤");
+                state.detectorMode = 'motion';
+            }
+
             try {
                 const constraints = {
                     audio: false,
@@ -437,108 +455,146 @@
                     videoFeed.srcObject = stream;
                 } catch (innerErr) {
                     console.error("相機加載失敗：", innerErr);
-                    // 權限被拒或相機不可用，更新介面提示，系統將自動套用炫酷虛擬網格雷達模式
+                    state.detectorMode = 'simulation';
                     controlInfo.innerHTML = "<span class='text-yellow-400'><i class='fa-solid fa-triangle-exclamation'></i> 偵測到相機遭封鎖</span><br>已為您自動載入「數位雷達模擬器」！鎖定框將在螢幕上飄移。";
                 }
             }
         }
 
-        // 高性能、零依賴的「動態生物特徵追蹤算法」
-        // 透過對比連續相機影格像素差，定位畫面中的移動人體
+        // 高性能、相容雙引擎的鎖定算法
         let prevFrameData = null;
         let changeDiagnoseTimer = 0;
-        let mockTargetTime = 0; // 用於虛擬模擬模式下的平滑運動路徑
+        let mockTargetTime = 0;
 
-        function scanForHumanTarget(deltaTime) {
-            // 如果相機還沒開好，或者權限被拒 (ReadyState不夠)，則自動啟用模擬鎖定目標
-            if (videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
+        function scanForHumanTarget(deltaTime, timestamp) {
+            // 如果相機權限遭拒，切換為模擬雷達軌跡
+            if (state.detectorMode === 'simulation' || videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
                 mockHumanTarget(deltaTime);
                 return;
             }
 
-            // 1. 將視訊縮放繪製到隱藏畫布，優化效能
-            hiddenCtx.drawImage(videoFeed, 0, 0, hiddenCv.width, hiddenCv.height);
-            const currentFrame = hiddenCtx.getImageData(0, 0, hiddenCv.width, hiddenCv.height);
-            const data = currentFrame.data;
+            // === 模式 1：原生 AI 臉部偵測 (FaceDetector API) ===
+            if (state.detectorMode === 'ai' && state.faceDetectorInstance) {
+                detectorTypeText.innerHTML = "<i class='fa-solid fa-brain text-emerald-400 mr-1'></i> LOCK-ON: AI FACE TARGET";
+                
+                // 節流偵測：限制每 80 毫秒執行一次 FaceDetector 以維持極致的 60FPS
+                if (!state.isAiDetecting && timestamp - state.lastAiDetectTime > 80) {
+                    state.isAiDetecting = true;
+                    state.faceDetectorInstance.detect(videoFeed)
+                        .then(faces => {
+                            state.isAiDetecting = false;
+                            state.lastAiDetectTime = timestamp;
 
-            if (!prevFrameData) {
+                            if (faces && faces.length > 0) {
+                                // 取得首位被鎖定的面部特徵
+                                const face = faces[0];
+                                const box = face.boundingBox;
+
+                                // 取得影片跟 Canvas 縮放比例，作精準座標投射
+                                const videoW = videoFeed.videoWidth || 1280;
+                                const videoH = videoFeed.videoHeight || 720;
+                                const scaleX = gameCanvas.width / videoW;
+                                const scaleY = gameCanvas.height / videoH;
+
+                                // 投射回全螢幕
+                                const targetX = (box.x + box.width / 2) * scaleX;
+                                const targetY = (box.y + box.height / 2) * scaleY;
+                                const targetW = box.width * scaleX;
+                                const targetH = box.height * scaleY;
+
+                                // 平滑緩動 (LERP) 更新目標人臉，黏著度極高且毫無抖動
+                                state.target.x = state.target.x + (targetX - state.target.x) * 0.15;
+                                state.target.y = state.target.y + (targetY - state.target.y) * 0.15;
+                                state.target.width = state.target.width + (targetW - state.target.width) * 0.12;
+                                state.target.height = state.target.height + (targetH - state.target.height) * 0.12;
+
+                                state.target.lockStrength = Math.min(100, state.target.lockStrength + 25);
+                                state.target.locked = state.target.lockStrength > 20;
+
+                                lockIndicator.classList.remove('opacity-0');
+                            } else {
+                                // 沒抓到人臉時緩慢淡出 (鎖定滯留 3-4 秒)
+                                fadeOutLock();
+                            }
+                        })
+                        .catch(err => {
+                            console.error("AI 偵測出錯：", err);
+                            state.isAiDetecting = false;
+                            // 若 AI 發生錯誤，無縫降級為動態影格像素偵測
+                            state.detectorMode = 'motion';
+                        });
+                }
+            }
+            
+            // === 模式 2：備用動態影格像素追蹤 (Motion Detector) ===
+            if (state.detectorMode === 'motion') {
+                detectorTypeText.innerHTML = "<i class='fa-solid fa-radar text-cyan-400 mr-1'></i> LOCK-ON: MOTION RADAR";
+
+                hiddenCtx.drawImage(videoFeed, 0, 0, hiddenCv.width, hiddenCv.height);
+                const currentFrame = hiddenCtx.getImageData(0, 0, hiddenCv.width, hiddenCv.height);
+                const data = currentFrame.data;
+
+                if (!prevFrameData) {
+                    prevFrameData = data;
+                    return;
+                }
+
+                let sumX = 0;
+                let sumY = 0;
+                let count = 0;
+                let minX = hiddenCv.width;
+                let maxX = 0;
+                let minY = hiddenCv.height;
+                let maxY = 0;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const rDiff = Math.abs(data[i] - prevFrameData[i]);
+                    const gDiff = Math.abs(data[i+1] - prevFrameData[i+1]);
+                    const bDiff = Math.abs(data[i+2] - prevFrameData[i+2]);
+                    
+                    if (rDiff + gDiff + bDiff > 95) {
+                        const pixelIdx = i / 4;
+                        const x = pixelIdx % hiddenCv.width;
+                        const y = Math.floor(pixelIdx / hiddenCv.width);
+
+                        sumX += x;
+                        sumY += y;
+                        count++;
+
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                    }
+                }
+
                 prevFrameData = data;
-                mockHumanTarget(deltaTime);
-                return;
-            }
 
-            // 2. 進行幀差動態像素運算 (Frame-difference Motion Detection)
-            let sumX = 0;
-            let sumY = 0;
-            let count = 0;
-            let minX = hiddenCv.width;
-            let maxX = 0;
-            let minY = hiddenCv.height;
-            let maxY = 0;
+                if (count > 70) { 
+                    const scaleX = gameCanvas.width / hiddenCv.width;
+                    const scaleY = gameCanvas.height / hiddenCv.height;
 
-            for (let i = 0; i < data.length; i += 4) {
-                const rDiff = Math.abs(data[i] - prevFrameData[i]);
-                const gDiff = Math.abs(data[i+1] - prevFrameData[i+1]);
-                const bDiff = Math.abs(data[i+2] - prevFrameData[i+2]);
-                
-                // 動態閾值判斷 (35)：過濾極其微小的相機噪點
-                if (rDiff + gDiff + bDiff > 105) {
-                    const pixelIdx = i / 4;
-                    const x = pixelIdx % hiddenCv.width;
-                    const y = Math.floor(pixelIdx / hiddenCv.width);
+                    const targetW = 160;
+                    const targetH = 160;
 
-                    sumX += x;
-                    sumY += y;
-                    count++;
+                    const targetX = minX * scaleX + (maxX - minX) * scaleX / 2;
+                    const targetY = minY * scaleY + (maxY - minY) * scaleY * 0.3;
 
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
+                    state.target.x = state.target.x + (targetX - state.target.x) * 0.08;
+                    state.target.y = state.target.y + (targetY - state.target.y) * 0.08;
+                    state.target.width = state.target.width + (targetW - state.target.width) * 0.1;
+                    state.target.height = state.target.height + (targetH - state.target.height) * 0.1;
+                    
+                    state.target.lockStrength = Math.min(100, state.target.lockStrength + 20);
+                    state.target.locked = state.target.lockStrength > 25;
+                    
+                    lockIndicator.classList.remove('opacity-0');
+                } else {
+                    fadeOutLock();
                 }
             }
 
-            // 保存目前影格以備下次比對
-            prevFrameData = data;
-
-            // 3. 如果偵測到一定程度的動態生物跡象 (判定前方有人移動)
-            if (count > 120) { 
-                // 將隱藏畫布的坐標投影回手機全螢幕
-                const scaleX = gameCanvas.width / hiddenCv.width;
-                const scaleY = gameCanvas.height / hiddenCv.height;
-
-                // 限制定框大小：使其集中在頭部區域 (保持在 100px - 140px 的精巧比例)
-                const motionW = (maxX - minX) * scaleX;
-                const motionH = (maxY - minY) * scaleY;
-                const targetW = Math.max(100, Math.min(140, motionW * 0.4));
-                const targetH = Math.max(100, Math.min(140, motionH * 0.4));
-
-                // 將中心點移至動態追蹤的上半部（約 25% 處），從而精準鎖定頭部
-                const targetX = minX * scaleX + (maxX - minX) * scaleX / 2;
-                const targetY = minY * scaleY + (maxY - minY) * scaleY * 0.25;
-
-                state.target.x = state.target.x + (targetX - state.target.x) * 0.15;
-                state.target.y = state.target.y + (targetY - state.target.y) * 0.15;
-                state.target.width = state.target.width + (targetW - state.target.width) * 0.15;
-                state.target.height = state.target.height + (targetH - state.target.height) * 0.15;
-                
-                // 強度鎖定
-                state.target.lockStrength = Math.min(100, state.target.lockStrength + 10);
-                state.target.locked = state.target.lockStrength > 40;
-                
-                lockIndicator.classList.remove('opacity-0');
-            } else {
-                // 如果沒有動態，漸進式降低鎖定強度
-                state.target.lockStrength = Math.max(0, state.target.lockStrength - 2);
-                if (state.target.lockStrength === 0) {
-                    state.target.locked = false;
-                    lockIndicator.classList.add('opacity-0');
-                    // 沒人動時，自動套用飄浮虛擬目標，維持遊戲操作手感
-                    mockHumanTarget(deltaTime);
-                }
-            }
-
-            // 4. 定期變更惡搞診斷內容，拉滿喜劇效果
+            // 定期更換隨機幽默診斷內容
             changeDiagnoseTimer += deltaTime;
             if (changeDiagnoseTimer > 3.0 || state.target.funnyLabel === "") {
                 const randomDiag = funnyDiagnoses[Math.floor(Math.random() * funnyDiagnoses.length)];
@@ -548,26 +604,32 @@
             }
         }
 
-        // 模擬與備用鎖定框：在相機不可用或畫面靜止時，提供超流暢正弦軌跡漂移，讓使用者在電腦或被限制權限時依然能好玩射擊！
+        // 鎖定滯留淡出
+        function fadeOutLock() {
+            state.target.lockStrength = Math.max(0, state.target.lockStrength - 0.6);
+            if (state.target.lockStrength === 0) {
+                state.target.locked = false;
+                lockIndicator.classList.add('opacity-0');
+            }
+        }
+
+        // 模擬備用鎖定軌跡 (無相機/開發測試用)
         function mockHumanTarget(deltaTime = 0.016) {
+            detectorTypeText.innerHTML = "<i class='fa-solid fa-gamepad text-yellow-400 mr-1'></i> LOCK-ON: RADAR SIMULATION";
             mockTargetTime += deltaTime * 1.5;
             
-            // 使用正弦與餘弦波生成滑順的無限符號(8字形)漂移路徑，大幅提昇遊玩樂趣
             const cx = gameCanvas.width / 2 + Math.sin(mockTargetTime) * (gameCanvas.width * 0.25);
             const cy = gameCanvas.height / 2 + Math.cos(mockTargetTime * 0.7) * (gameCanvas.height * 0.18);
             
-            // 溫和緩動趨近目標點
-            state.target.x = state.target.x + (cx - state.target.x) * 0.1;
-            state.target.y = state.target.y + (cy - state.target.y) * 0.1;
-            // 預設為人臉大小的小定框 (115x115)
-            state.target.width = state.target.width + (115 - state.target.width) * 0.1;
-            state.target.height = state.target.height + (115 - state.target.height) * 0.1;
+            state.target.x = state.target.x + (cx - state.target.x) * 0.08;
+            state.target.y = state.target.y + (cy - state.target.y) * 0.08;
+            state.target.width = state.target.width + (160 - state.target.width) * 0.1;
+            state.target.height = state.target.height + (160 - state.target.height) * 0.1;
             state.target.locked = true;
             state.target.lockStrength = 80;
             
             lockIndicator.classList.remove('opacity-0');
 
-            // 診斷更新
             changeDiagnoseTimer += deltaTime;
             if (changeDiagnoseTimer > 3.0 || state.target.funnyLabel === "") {
                 const randomDiag = funnyDiagnoses[Math.floor(Math.random() * funnyDiagnoses.length)];
@@ -577,25 +639,21 @@
             }
         }
 
-        // 繪製虛擬雷達網格背景 (當相機權限被拒時，展現超炫酷的代替背景，避免黑屏)
+        // 繪製虛擬雷達網格背景
         function drawVirtualBackground(ctx) {
-            // 深邃科幻背景色
             ctx.fillStyle = "#07070c";
             ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
             
-            // 繪製雷達探測網格
             ctx.strokeStyle = "rgba(34, 211, 238, 0.04)";
             ctx.lineWidth = 1;
             const gridSize = 45;
             
-            // 直線
             for (let x = 0; x < gameCanvas.width; x += gridSize) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x, gameCanvas.height);
                 ctx.stroke();
             }
-            // 橫線
             for (let y = 0; y < gameCanvas.height; y += gridSize) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
@@ -603,7 +661,6 @@
                 ctx.stroke();
             }
             
-            // 繪製不斷向下滑動的綠色激光掃描線
             const time = Date.now() * 0.001;
             const sweepY = (time * 180) % gameCanvas.height;
             ctx.strokeStyle = "rgba(34, 211, 238, 0.12)";
@@ -613,7 +670,6 @@
             ctx.lineTo(gameCanvas.width, sweepY);
             ctx.stroke();
             
-            // 繪製背景正中央的科技環形旋轉線
             ctx.save();
             const cx = gameCanvas.width / 2;
             const cy = gameCanvas.height / 2;
@@ -629,7 +685,6 @@
             ctx.stroke();
             ctx.restore();
             
-            // 提示字
             ctx.fillStyle = "rgba(148, 163, 184, 0.35)";
             ctx.font = '11px Orbitron, sans-serif';
             ctx.textAlign = 'center';
@@ -643,16 +698,15 @@
                 this.y = y;
                 this.emoji = funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)];
                 
-                // 隨機散射速度
                 const angle = Math.random() * Math.PI * 2;
                 const speed = 3 + Math.random() * 8;
                 this.vx = Math.cos(angle) * speed;
                 this.vy = Math.sin(angle) * speed;
                 
-                this.size = 18 + Math.random() * 24; // 大尺寸更醒目
+                this.size = 18 + Math.random() * 24;
                 this.alpha = 1;
                 this.decay = 0.015 + Math.random() * 0.02;
-                this.gravity = 0.15; // 帶有一點掉落重力效果
+                this.gravity = 0.15;
             }
             update() {
                 this.x += this.vx;
@@ -694,18 +748,17 @@
                 
                 if (this.isCrit) {
                     ctx.font = '900 24px Orbitron, "Microsoft JhengHei"';
-                    ctx.fillStyle = '#f43f5e'; // 亮粉紅
+                    ctx.fillStyle = '#f43f5e';
                     ctx.shadowColor = '#000000';
                     ctx.shadowBlur = 6;
                 } else {
                     ctx.font = 'bold 18px "Rajdhani", "Microsoft JhengHei"';
-                    ctx.fillStyle = '#22d3ee'; // 亮天藍
+                    ctx.fillStyle = '#22d3ee';
                     ctx.shadowColor = '#000000';
                     ctx.shadowBlur = 4;
                 }
                 
                 ctx.textAlign = 'center';
-                // 畫文字黑邊增加可讀性
                 ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 4;
                 ctx.strokeText(this.text, this.x, this.y);
@@ -724,7 +777,7 @@
                 this.alpha = 1.0;
             }
             update(deltaTime) {
-                this.alpha -= deltaTime * 6.0; // 極速淡出
+                this.alpha -= deltaTime * 6.0;
             }
             draw(ctx) {
                 if (this.alpha <= 0) return;
@@ -734,14 +787,12 @@
                 ctx.shadowColor = '#f43f5e';
                 ctx.shadowBlur = 15;
                 
-                // 畫主激光線
                 ctx.lineWidth = 8;
                 ctx.beginPath();
                 ctx.moveTo(this.startX, this.startY);
                 ctx.lineTo(this.endX, this.endY);
                 ctx.stroke();
 
-                // 畫核心白光線
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 3;
                 ctx.beginPath();
@@ -753,7 +804,6 @@
             }
         }
 
-        // 開槍整火
         function fireWeapon() {
             if (!state.gameActive || state.overheated) {
                 if (state.overheated) {
@@ -763,11 +813,9 @@
                 return;
             }
 
-            // 1. 積累過熱
             state.heat += 18;
             sfx.playShoot();
 
-            // 2. 震動與閃光
             triggerFlash('#ffffff', 0.2);
             triggerScreenShake();
 
@@ -776,33 +824,29 @@
             const screenCX = screenW / 2;
             const screenCY = screenH / 2;
 
-            // 3. 判斷準星是否對準了被鎖定的人類框
             let isHit = false;
             const t = state.target;
             const halfW = t.width / 2;
             const halfH = t.height / 2;
 
             if (state.target.locked) {
-                // 判斷中央準星 (screenCX, screenCY) 是否落入鎖定範圍內
-                if (screenCX >= t.x - halfW && screenCX <= t.x + halfW &&
-                    screenCY >= t.y - halfH && screenCY <= t.y + halfH) {
+                // 超寬容鎖定：給予 60 像素容錯，好射好玩！
+                const tolerance = 60;
+                if (screenCX >= t.x - halfW - tolerance && screenCX <= t.x + halfW + tolerance &&
+                    screenCY >= t.y - halfH - tolerance && screenCY <= t.y + halfH + tolerance) {
                     isHit = true;
                 }
             }
 
-            // 4. 計算雷射起點 (畫面底部巨大開槍處)
             const laser = new LaserBeam(screenW * 0.8, screenH, isHit ? t.x : screenCX, isHit ? t.y : screenCY);
             state.lasers.push(laser);
 
-            // 5. 擊中反饋
             if (isHit) {
                 processPrankHit(t.x, t.y);
             } else {
-                // 未擊中空拍，中斷 Combo
                 resetCombo();
             }
 
-            // 6. 熱量防爆
             if (state.heat >= 100) {
                 state.heat = 100;
                 state.overheated = true;
@@ -817,27 +861,22 @@
             state.combo++;
             updateComboHUD();
 
-            // 1. 隨機選一個搞笑語錄
             const slang = hitSlangs[Math.floor(Math.random() * hitSlangs.length)];
-            const multiplier = 1 + Math.floor(state.combo / 4) * 0.2; // Combo 分數倍率
+            const multiplier = 1 + Math.floor(state.combo / 4) * 0.2;
             const scoreGained = Math.floor(slang.score * multiplier);
 
-            // 2. 累加惡搞分數與 XP
             state.score += scoreGained;
             scoreDisplay.innerText = state.score.toLocaleString();
             gainXP(slang.crit ? 35 : 20);
 
-            // 3. 播放搞笑音效與手機振動
             sfx.playExplosion();
-            triggerFlash('#a855f7', 0.25); // 紫光閃爍
+            triggerFlash('#a855f7', 0.25);
             if (navigator.vibrate) navigator.vibrate(slang.crit ? 200 : 80);
 
-            // 4. 爆發大量表情包粒子
             for (let i = 0; i < (slang.crit ? 25 : 12); i++) {
                 state.particles.push(new EmojiParticle(hitX, hitY));
             }
 
-            // 5. 彈出飄浮搞笑字樣
             state.floatingTexts.push(new PrankText(hitX, hitY - 40, `${slang.text}`, slang.crit));
             state.floatingTexts.push(new PrankText(hitX, hitY - 10, `+${scoreGained} PTS`, false));
         }
@@ -848,12 +887,11 @@
             if (state.xp >= state.xpNeeded) {
                 state.xp -= state.xpNeeded;
                 state.level++;
-                state.xpNeeded = Math.floor(state.xpNeeded * 1.35); // 升級難度
+                state.xpNeeded = Math.floor(state.xpNeeded * 1.35);
                 
                 sfx.playLevelUp();
                 levelDisplay.innerText = state.level.toString().padStart(2, '0');
                 
-                // 更新整人頭銜稱號
                 const titleIdx = Math.min(levelTitles.length - 1, Math.floor((state.level - 1) / 2));
                 titleDisplay.innerText = levelTitles[titleIdx];
 
@@ -866,7 +904,6 @@
                 ));
             }
             
-            // 更新進度條
             const xpPct = (state.xp / state.xpNeeded) * 100;
             xpBar.style.width = `${xpPct}%`;
         }
@@ -912,7 +949,6 @@
                 comboContainer.classList.add('opacity-100', 'scale-100');
             }
 
-            // 4秒內沒擊中下個目標即中斷
             state.comboTimer = setTimeout(() => {
                 resetCombo();
             }, 4000);
@@ -930,18 +966,15 @@
             const deltaTime = (timestamp - state.lastTime) / 1000;
             state.lastTime = timestamp;
 
-            // 1. 如果相機串流沒開，在底層繪製科技背景；如果開了就清空背景露出視訊
-            if (videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
+            if (state.detectorMode === 'simulation' || videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
                 drawVirtualBackground(ctx);
             } else {
                 ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
             }
 
             if (state.gameActive) {
-                // 2. 執行高速生物動態比對偵測
-                scanForHumanTarget(deltaTime);
+                scanForHumanTarget(deltaTime, timestamp);
 
-                // 3. 自動冷卻熱量
                 if (state.heat > 0) {
                     const coolingRate = state.overheated ? 12 : 22;
                     state.heat -= coolingRate * deltaTime;
@@ -955,7 +988,6 @@
                     updateWeaponHUD();
                 }
 
-                // 4. 繪製雷射開槍射擊光束
                 state.lasers.forEach((laser, idx) => {
                     laser.update(deltaTime);
                     laser.draw(ctx);
@@ -964,12 +996,10 @@
                     }
                 });
 
-                // 5. 繪製人類定位追蹤鎖定框 (Meme Scanning UI)
                 if (state.target.locked) {
                     drawBiometricLockbox();
                 }
 
-                // 6. 更新並繪製爆散搞笑表情包
                 state.particles.forEach((p, idx) => {
                     p.update();
                     p.draw(ctx);
@@ -978,7 +1008,6 @@
                     }
                 });
 
-                // 7. 更新並繪製搞笑浮空文字
                 state.floatingTexts.forEach((f, idx) => {
                     f.update(deltaTime);
                     f.draw(ctx);
@@ -987,7 +1016,6 @@
                     }
                 });
 
-                // 8. 繪製極具張力的中央科幻準星
                 drawCrosshair();
             }
 
@@ -1003,7 +1031,6 @@
 
             ctx.save();
             
-            // 霓虹粉紅/綠交替閃爍邊框
             const isTargetCenter = (gameCanvas.width/2 >= t.x - halfW && gameCanvas.width/2 <= t.x + halfW &&
                                     gameCanvas.height/2 >= t.y - halfH && gameCanvas.height/2 <= t.y + halfH);
             
@@ -1012,38 +1039,32 @@
             ctx.shadowBlur = 10;
             ctx.lineWidth = 2;
 
-            // 1. 繪製四角 L 型鎖定括號
             const bracketLength = 25;
             
-            // 左上角
             ctx.beginPath();
             ctx.moveTo(t.x - halfW + bracketLength, t.y - halfH);
             ctx.lineTo(t.x - halfW, t.y - halfH);
             ctx.lineTo(t.x - halfW, t.y - halfH + bracketLength);
             ctx.stroke();
 
-            // 右上角
             ctx.beginPath();
             ctx.moveTo(t.x + halfW - bracketLength, t.y - halfH);
             ctx.lineTo(t.x + halfW, t.y - halfH);
             ctx.lineTo(t.x + halfW, t.y - halfH + bracketLength);
             ctx.stroke();
 
-            // 左下角
             ctx.beginPath();
             ctx.moveTo(t.x - halfW + bracketLength, t.y + halfH);
             ctx.lineTo(t.x - halfW, t.y + halfH);
             ctx.lineTo(t.x - halfW, t.y + halfH - bracketLength);
             ctx.stroke();
 
-            // 右下角
             ctx.beginPath();
             ctx.moveTo(t.x + halfW - bracketLength, t.y + halfH);
             ctx.lineTo(t.x + halfW, t.y + halfH);
             ctx.lineTo(t.x + halfW, t.y + halfH - bracketLength);
             ctx.stroke();
 
-            // 2. 繪製框內極微弱霓虹掃描線
             ctx.fillStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.04)' : 'rgba(34, 211, 238, 0.03)';
             ctx.fillRect(t.x - halfW, t.y - halfH, t.width, t.height);
 
@@ -1055,17 +1076,15 @@
             ctx.lineTo(t.x + halfW, scanY);
             ctx.stroke();
 
-            // 3. 繪製搞笑分析數據 UI 面板 (貼在頭頂上方)
-            ctx.shadowBlur = 0; // 關閉發光確保文字高度可讀
+            ctx.shadowBlur = 0;
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
             ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.5)' : 'rgba(34, 211, 238, 0.5)';
             ctx.lineWidth = 1;
             
             const panelW = 190;
             const panelH = 55;
-            const panelX = t.x - panelW / 2; // 置中對齊
+            const panelX = t.x - panelW / 2;
             
-            // 預設將面板放到頭頂上方 12 像素處；若太貼近螢幕邊緣 (Y < 10)，則改放到定框下方
             let panelY = t.y - halfH - panelH - 12;
             if (panelY < 10) {
                 panelY = t.y + halfH + 12;
@@ -1076,7 +1095,6 @@
             ctx.fill();
             ctx.stroke();
 
-            // 繪製科技感十足的小指引虛線連結面板與定框
             ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.4)' : 'rgba(34, 211, 238, 0.4)';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -1089,10 +1107,9 @@
             }
             ctx.stroke();
 
-            // 寫入診斷字
             ctx.fillStyle = isTargetCenter ? '#f43f5e' : '#22d3ee';
             ctx.font = 'bold 11px Orbitron, sans-serif';
-            ctx.fillText("TARGET: HOMO SAPIENS (HEAD)", panelX + 8, panelY + 16);
+            ctx.fillText(state.detectorMode === 'ai' ? "TARGET: AI FACE DETECTED" : "TARGET: HOMO SAPIENS (HEAD)", panelX + 8, panelY + 16);
 
             ctx.fillStyle = '#94a3b8';
             ctx.font = 'bold 9px "Microsoft JhengHei", sans-serif';
@@ -1116,7 +1133,6 @@
             ctx.shadowBlur = 10;
             ctx.shadowColor = state.overheated ? '#f43f5e' : '#22d3ee';
 
-            // 外環 (雙弧旋轉)
             ctx.strokeStyle = state.overheated ? 'rgba(244, 63, 94, 0.8)' : 'rgba(34, 211, 238, 0.8)';
             ctx.lineWidth = 2;
             ctx.beginPath();
@@ -1126,21 +1142,15 @@
             ctx.arc(cx, cy, size + 12, time + Math.PI, time + Math.PI * 1.4);
             ctx.stroke();
 
-            // 中心鎖定點
             ctx.fillStyle = state.overheated ? '#f43f5e' : '#22d3ee';
             ctx.beginPath();
             ctx.arc(cx, cy, 3, 0, Math.PI * 2);
             ctx.fill();
 
-            // 四角尖銳十字瞄準線
             ctx.beginPath();
-            // 上
             ctx.moveTo(cx, cy - size); ctx.lineTo(cx, cy - size + 12);
-            // 下
             ctx.moveTo(cx, cy + size); ctx.lineTo(cx, cy + size - 12);
-            // 左
             ctx.moveTo(cx - size, cy); ctx.lineTo(cx - size + 12, cy);
-            // 右
             ctx.moveTo(cx + size, cy); ctx.lineTo(cx + size - 12, cy);
             ctx.stroke();
 
@@ -1149,21 +1159,13 @@
 
         // 綁定點擊與相機啟動
         startBtn.addEventListener('click', async () => {
-            // 初始化搞笑音效 (在使用者手勢事件中激活 AudioContext)
             sfx.init();
-
-            // 隱藏引導覆蓋層
             permissionScreen.classList.add('hidden');
-            
-            // 請求開啟相機鏡頭 (即便被拒絕也會以 try-catch 攔截，讓遊戲流暢載入)
             await initCamera();
-
-            // 開始遊戲
             state.gameActive = true;
             state.lastTime = performance.now();
         });
 
-        // 綁定發射整人雷射
         shootBtn.addEventListener('mousedown', (e) => {
             e.preventDefault();
             fireWeapon();
@@ -1174,7 +1176,6 @@
             fireWeapon();
         }, { passive: false });
 
-        // 支援電腦空白鍵快捷惡搞開槍
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 e.preventDefault();
@@ -1182,7 +1183,6 @@
             }
         });
 
-        // 啟動主動幀循環
         requestAnimationFrame(gameLoop);
     </script>
 </body>
