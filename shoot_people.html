@@ -112,7 +112,7 @@
             <button id="start-btn" class="scifi-font w-full py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:opacity-90 rounded-xl font-bold tracking-wider text-white text-lg shadow-lg shadow-pink-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
                 <i class="fa-solid fa-face-viewfinder"></i> 啟動人類偵測雷達
             </button>
-            <p class="text-[10px] text-slate-500 mt-4 text-center">建議在手機或支援相機之移動設備上以 HTTPS 連結運行，以獲得最佳相機掃描體驗。</p>
+            <p class="text-[10px] text-slate-500 mt-4 text-center">若瀏覽器拒絕相機權限，系統會自動切換為「模擬雷達模式」，無需擔心無法遊玩！</p>
         </div>
     </div>
 
@@ -437,7 +437,8 @@
                     videoFeed.srcObject = stream;
                 } catch (innerErr) {
                     console.error("相機加載失敗：", innerErr);
-                    controlInfo.innerText = "相機不可用。此處將採用「模擬畫面」供您體驗！";
+                    // 權限被拒或相機不可用，更新介面提示，系統將自動套用炫酷虛擬網格雷達模式
+                    controlInfo.innerHTML = "<span class='text-yellow-400'><i class='fa-solid fa-triangle-exclamation'></i> 偵測到相機遭封鎖</span><br>已為您自動載入「數位雷達模擬器」！鎖定框將在螢幕上飄移。";
                 }
             }
         }
@@ -446,11 +447,12 @@
         // 透過對比連續相機影格像素差，定位畫面中的移動人體
         let prevFrameData = null;
         let changeDiagnoseTimer = 0;
+        let mockTargetTime = 0; // 用於虛擬模擬模式下的平滑運動路徑
 
-        function scanForHumanTarget() {
+        function scanForHumanTarget(deltaTime) {
+            // 如果相機還沒開好，或者權限被拒 (ReadyState不夠)，則自動啟用模擬鎖定目標
             if (videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
-                // 如果相機沒開，則在螢幕中央模擬一個「測試人類目標」方便預覽惡搞
-                mockHumanTarget();
+                mockHumanTarget(deltaTime);
                 return;
             }
 
@@ -461,7 +463,7 @@
 
             if (!prevFrameData) {
                 prevFrameData = data;
-                mockHumanTarget();
+                mockHumanTarget(deltaTime);
                 return;
             }
 
@@ -505,11 +507,15 @@
                 const scaleX = gameCanvas.width / hiddenCv.width;
                 const scaleY = gameCanvas.height / hiddenCv.height;
 
-                // 緩動平滑算法 (Lerp)，避免鎖定框晃動過劇
-                const targetW = (maxX - minX) * scaleX;
-                const targetH = (maxY - minY) * scaleY;
-                const targetX = minX * scaleX + targetW / 2;
-                const targetY = minY * scaleY + targetH / 2;
+                // 限制定框大小：使其集中在頭部區域 (保持在 100px - 140px 的精巧比例)
+                const motionW = (maxX - minX) * scaleX;
+                const motionH = (maxY - minY) * scaleY;
+                const targetW = Math.max(100, Math.min(140, motionW * 0.4));
+                const targetH = Math.max(100, Math.min(140, motionH * 0.4));
+
+                // 將中心點移至動態追蹤的上半部（約 25% 處），從而精準鎖定頭部
+                const targetX = minX * scaleX + (maxX - minX) * scaleX / 2;
+                const targetY = minY * scaleY + (maxY - minY) * scaleY * 0.25;
 
                 state.target.x = state.target.x + (targetX - state.target.x) * 0.15;
                 state.target.y = state.target.y + (targetY - state.target.y) * 0.15;
@@ -527,13 +533,13 @@
                 if (state.target.lockStrength === 0) {
                     state.target.locked = false;
                     lockIndicator.classList.add('opacity-0');
-                    // 沒人動時，維持在螢幕中央，便於惡搞静止不動的朋友
-                    mockHumanTarget();
+                    // 沒人動時，自動套用飄浮虛擬目標，維持遊戲操作手感
+                    mockHumanTarget(deltaTime);
                 }
             }
 
             // 4. 定期變更惡搞診斷內容，拉滿喜劇效果
-            changeDiagnoseTimer += 0.016; // 估算一幀約 16ms
+            changeDiagnoseTimer += deltaTime;
             if (changeDiagnoseTimer > 3.0 || state.target.funnyLabel === "") {
                 const randomDiag = funnyDiagnoses[Math.floor(Math.random() * funnyDiagnoses.length)];
                 state.target.funnyLabel = randomDiag.label;
@@ -542,18 +548,92 @@
             }
         }
 
-        // 模擬一個中央鎖定框（防呆機制：當沒人動或相機關閉時仍能對著中央的人玩）
-        function mockHumanTarget() {
-            const cx = gameCanvas.width / 2;
-            const cy = gameCanvas.height / 2;
+        // 模擬與備用鎖定框：在相機不可用或畫面靜止時，提供超流暢正弦軌跡漂移，讓使用者在電腦或被限制權限時依然能好玩射擊！
+        function mockHumanTarget(deltaTime = 0.016) {
+            mockTargetTime += deltaTime * 1.5;
             
-            // 溫和緩動至中心
+            // 使用正弦與餘弦波生成滑順的無限符號(8字形)漂移路徑，大幅提昇遊玩樂趣
+            const cx = gameCanvas.width / 2 + Math.sin(mockTargetTime) * (gameCanvas.width * 0.25);
+            const cy = gameCanvas.height / 2 + Math.cos(mockTargetTime * 0.7) * (gameCanvas.height * 0.18);
+            
+            // 溫和緩動趨近目標點
             state.target.x = state.target.x + (cx - state.target.x) * 0.1;
             state.target.y = state.target.y + (cy - state.target.y) * 0.1;
-            state.target.width = state.target.width + (220 - state.target.width) * 0.1;
-            state.target.height = state.target.height + (350 - state.target.height) * 0.1;
+            // 預設為人臉大小的小定框 (115x115)
+            state.target.width = state.target.width + (115 - state.target.width) * 0.1;
+            state.target.height = state.target.height + (115 - state.target.height) * 0.1;
             state.target.locked = true;
             state.target.lockStrength = 80;
+            
+            lockIndicator.classList.remove('opacity-0');
+
+            // 診斷更新
+            changeDiagnoseTimer += deltaTime;
+            if (changeDiagnoseTimer > 3.0 || state.target.funnyLabel === "") {
+                const randomDiag = funnyDiagnoses[Math.floor(Math.random() * funnyDiagnoses.length)];
+                state.target.funnyLabel = randomDiag.label;
+                state.target.funnyValue = randomDiag.val;
+                changeDiagnoseTimer = 0;
+            }
+        }
+
+        // 繪製虛擬雷達網格背景 (當相機權限被拒時，展現超炫酷的代替背景，避免黑屏)
+        function drawVirtualBackground(ctx) {
+            // 深邃科幻背景色
+            ctx.fillStyle = "#07070c";
+            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            
+            // 繪製雷達探測網格
+            ctx.strokeStyle = "rgba(34, 211, 238, 0.04)";
+            ctx.lineWidth = 1;
+            const gridSize = 45;
+            
+            // 直線
+            for (let x = 0; x < gameCanvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, gameCanvas.height);
+                ctx.stroke();
+            }
+            // 橫線
+            for (let y = 0; y < gameCanvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(gameCanvas.width, y);
+                ctx.stroke();
+            }
+            
+            // 繪製不斷向下滑動的綠色激光掃描線
+            const time = Date.now() * 0.001;
+            const sweepY = (time * 180) % gameCanvas.height;
+            ctx.strokeStyle = "rgba(34, 211, 238, 0.12)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, sweepY);
+            ctx.lineTo(gameCanvas.width, sweepY);
+            ctx.stroke();
+            
+            // 繪製背景正中央的科技環形旋轉線
+            ctx.save();
+            const cx = gameCanvas.width / 2;
+            const cy = gameCanvas.height / 2;
+            ctx.translate(cx, cy);
+            ctx.rotate(time * 0.4);
+            ctx.strokeStyle = "rgba(236, 72, 153, 0.05)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, 160, 0, Math.PI / 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, 0, 160, Math.PI, Math.PI * 1.5);
+            ctx.stroke();
+            ctx.restore();
+            
+            // 提示字
+            ctx.fillStyle = "rgba(148, 163, 184, 0.35)";
+            ctx.font = '11px Orbitron, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText("SIMULATION MODE ACTIVE (NO WEBCAM)", gameCanvas.width / 2, gameCanvas.height - 35);
         }
 
         // 搞怪表情包爆散粒子
@@ -850,12 +930,16 @@
             const deltaTime = (timestamp - state.lastTime) / 1000;
             state.lastTime = timestamp;
 
-            // 1. 清除畫布
-            ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+            // 1. 如果相機串流沒開，在底層繪製科技背景；如果開了就清空背景露出視訊
+            if (videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
+                drawVirtualBackground(ctx);
+            } else {
+                ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+            }
 
             if (state.gameActive) {
                 // 2. 執行高速生物動態比對偵測
-                scanForHumanTarget();
+                scanForHumanTarget(deltaTime);
 
                 // 3. 自動冷卻熱量
                 if (state.heat > 0) {
@@ -971,7 +1055,7 @@
             ctx.lineTo(t.x + halfW, scanY);
             ctx.stroke();
 
-            // 3. 繪製搞笑分析數據 UI 面板 (貼在左下角)
+            // 3. 繪製搞笑分析數據 UI 面板 (貼在頭頂上方)
             ctx.shadowBlur = 0; // 關閉發光確保文字高度可讀
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
             ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.5)' : 'rgba(34, 211, 238, 0.5)';
@@ -979,18 +1063,36 @@
             
             const panelW = 190;
             const panelH = 55;
-            const panelX = t.x - halfW;
-            const panelY = t.y + halfH + 8;
+            const panelX = t.x - panelW / 2; // 置中對齊
+            
+            // 預設將面板放到頭頂上方 12 像素處；若太貼近螢幕邊緣 (Y < 10)，則改放到定框下方
+            let panelY = t.y - halfH - panelH - 12;
+            if (panelY < 10) {
+                panelY = t.y + halfH + 12;
+            }
             
             ctx.beginPath();
             ctx.roundRect(panelX, panelY, panelW, panelH, 6);
             ctx.fill();
             ctx.stroke();
 
+            // 繪製科技感十足的小指引虛線連結面板與定框
+            ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.4)' : 'rgba(34, 211, 238, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            if (panelY < t.y) {
+                ctx.moveTo(t.x, panelY + panelH);
+                ctx.lineTo(t.x, t.y - halfH);
+            } else {
+                ctx.moveTo(t.x, panelY);
+                ctx.lineTo(t.x, t.y + halfH);
+            }
+            ctx.stroke();
+
             // 寫入診斷字
             ctx.fillStyle = isTargetCenter ? '#f43f5e' : '#22d3ee';
             ctx.font = 'bold 11px Orbitron, sans-serif';
-            ctx.fillText("TARGET: HOMO SAPIENS (ORGANIC)", panelX + 8, panelY + 16);
+            ctx.fillText("TARGET: HOMO SAPIENS (HEAD)", panelX + 8, panelY + 16);
 
             ctx.fillStyle = '#94a3b8';
             ctx.font = 'bold 9px "Microsoft JhengHei", sans-serif';
@@ -1053,7 +1155,7 @@
             // 隱藏引導覆蓋層
             permissionScreen.classList.add('hidden');
             
-            // 請求開啟相機鏡頭
+            // 請求開啟相機鏡頭 (即便被拒絕也會以 try-catch 攔截，讓遊戲流暢載入)
             await initCamera();
 
             // 開始遊戲
