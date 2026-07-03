@@ -73,7 +73,7 @@
     <!-- 射擊閃光與受傷閃紅特效疊加層 -->
     <div id="flash-effect" class="absolute inset-0 z-20 pointer-events-none transition-all duration-75 bg-transparent opacity-0"></div>
 
-    <!-- 啟動遊戲覆蓋層 (相機權限請求) -->
+    <!-- 啟動遊戲覆蓋層 (相機權限請求與 OpenCV 載入狀態) -->
     <div id="permission-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 bg-opacity-95 p-6 text-center">
         <div class="max-w-md w-full border border-pink-500/30 bg-slate-900/80 backdrop-blur-md rounded-2xl p-8 shadow-2xl shadow-pink-500/10">
             <h1 class="scifi-font text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400 mb-2">AR HUMAN ASSAULT</h1>
@@ -94,8 +94,8 @@
                         <i class="fa-solid fa-brain text-xs"></i>
                     </div>
                     <div>
-                        <h4 class="font-bold text-slate-200 font-sans">雙模 AI 偵測與鎖定技術</h4>
-                        <p class="text-xs text-slate-400 font-sans">整合原生瀏覽器 FaceDetector API。支援硬體加速人臉識別，無縫切換備份動態感應雷達！</p>
+                        <h4 class="font-bold text-slate-200 font-sans">OpenCV 實時 AI 人臉偵測</h4>
+                        <p class="text-xs text-slate-400 font-sans">整合全球最強開源視覺庫 OpenCV.js，使用 Haar Cascade 演算法，在 60FPS 狀態下精確標定人臉！</p>
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
@@ -109,10 +109,17 @@
                 </div>
             </div>
 
-            <button id="start-btn" class="scifi-font w-full py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:opacity-90 rounded-xl font-bold tracking-wider text-white text-lg shadow-lg shadow-pink-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
+            <!-- OpenCV 狀態欄 -->
+            <div class="mb-6 p-3 bg-slate-950/80 border border-slate-800 rounded-xl">
+                <div id="opencv-status" class="text-xs text-yellow-400 font-mono flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-spinner animate-spin"></i> 正在加載 OpenCV AI 視覺神經元...
+                </div>
+            </div>
+
+            <button id="start-btn" disabled class="scifi-font w-full py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 rounded-xl font-bold tracking-wider text-white text-lg shadow-lg shadow-pink-500/20 transition-all active:scale-95 flex items-center justify-center gap-2 opacity-50 cursor-not-allowed">
                 <i class="fa-solid fa-face-viewfinder"></i> 啟動人類偵測雷達
             </button>
-            <p class="text-[10px] text-slate-500 mt-4 text-center">若瀏覽器未開放相機，系統會自動切換為「模擬雷達模式」，直接體驗完整功能！</p>
+            <p class="text-[10px] text-slate-500 mt-4 text-center">OpenCV 需要數秒時間下載特徵檔。若加載超時，將自動降級為動態感應模式！</p>
         </div>
     </div>
 
@@ -181,7 +188,7 @@
                         <i class="fa-solid fa-circle-info mr-1"></i>偵測核心：
                     </span>
                     <span id="control-info" class="text-[10px] text-slate-300 font-sans font-medium leading-relaxed">
-                        對準你前面的朋友！雷達鎖定後按下 [FIRE] 給他迎頭痛擊！
+                        正在啟動雷達...
                     </span>
                 </div>
 
@@ -200,8 +207,11 @@
         </div>
     </div>
 
-    <!-- 用於底層像素動態比對分析的隱藏 Canvas -->
+    <!-- 用於底層像素分析與 OpenCV 運作的隱藏 Canvas -->
     <canvas id="hidden-cv" class="hidden"></canvas>
+
+    <!-- 異步加載 OpenCV.js 官方文件 CDN，防卡死 -->
+    <script src="https://docs.opencv.org/4.5.5/opencv.js" async type="text/javascript"></script>
 
     <script>
         const state = {
@@ -216,17 +226,21 @@
             gameActive: false,
             
             // 偵測模式狀態
-            detectorMode: 'none', // 'ai' (原生人臉偵測), 'motion' (動態影格像素偵測), 'simulation' (模擬)
-            faceDetectorInstance: null,
-            isAiDetecting: false,
-            lastAiDetectTime: 0,
+            detectorMode: 'none', // 'opencv' (OpenCV.js AI人臉偵測), 'motion' (備用動態追蹤), 'simulation' (模擬)
+            openCvLoaded: false,
+            faceCascade: null,
+            
+            // OpenCV 記憶體暫存 Mat 宣告
+            srcMat: null,
+            grayMat: null,
+            facesRects: null,
 
-            // 人類目標鎖定狀態
+            // 人類目標鎖定狀態 (調整預設大小，黏著度更高)
             target: {
                 x: 0,
                 y: 0,
-                width: 160,       
-                height: 160,
+                width: 140,       
+                height: 140,
                 locked: false,
                 lockStrength: 0, // 0 到 100
                 funnyLabel: "",
@@ -302,12 +316,13 @@
         const lockIndicator = document.getElementById('lock-indicator');
         const detectorTypeText = document.getElementById('detector-type-text');
         const controlInfo = document.getElementById('control-info');
+        const opencvStatus = document.getElementById('opencv-status');
 
         // --- 調整畫布尺寸 ---
         function resizeCanvas() {
             gameCanvas.width = window.innerWidth;
             gameCanvas.height = window.innerHeight;
-            // 保持低解析度以追求超高速動態影像運算
+            // 隱藏畫布尺寸（160x120）是 OpenCV 人臉即時偵測的最佳解析度，既省電又流暢
             hiddenCv.width = 160;
             hiddenCv.height = 120;
         }
@@ -416,27 +431,71 @@
         }
         const sfx = new FunnySoundEngine();
 
+        // --- OpenCV 載入與初始化邏輯 ---
+        function onOpenCvLoaded() {
+            opencvStatus.innerHTML = `<i class="fa-solid fa-cloud-arrow-down animate-bounce text-pink-400"></i> 正在加載 Haar Cascade 人臉特徵庫...`;
+            
+            // 下載 OpenCV 官方的人臉分類特徵 xml 檔，並存入虛擬檔案系統 (FS)
+            const cascadeFile = 'haarcascade_frontalface_default.xml';
+            const cascadeUrl = 'https://cdn.jsdelivr.net/gh/opencv/opencv@master/data/haarcascades/haarcascade_frontalface_default.xml';
+
+            fetch(cascadeUrl)
+                .then(res => {
+                    if (!res.ok) throw new Error("特徵檔下載失敗");
+                    return res.arrayBuffer();
+                })
+                .then(buffer => {
+                    // 將資料寫入 OpenCV 虛擬檔案系統
+                    const data = new Uint8Array(buffer);
+                    cv.FS_createDataFile('/', cascadeFile, data, true, false, false);
+                    
+                    // 初始化人臉分類器
+                    state.faceCascade = new cv.CascadeClassifier();
+                    state.faceCascade.load(cascadeFile);
+                    
+                    state.openCvLoaded = true;
+                    state.detectorMode = 'opencv';
+
+                    // 啟用啟動按鈕
+                    opencvStatus.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400"></i> OpenCV AI 視覺系統載入完成！`;
+                    enableStartButton();
+                })
+                .catch(err => {
+                    console.error("OpenCV 特徵檔載入失敗，將採用動態感應模式：", err);
+                    switchToFallbackMode("人臉庫載入失敗");
+                });
+        }
+
+        // OpenCV 異步載入超時防卡保護 (8秒)
+        const openCvTimeout = setTimeout(() => {
+            if (!state.openCvLoaded) {
+                console.warn("OpenCV 載入超時，自動降級為傳統動態雷達模式。");
+                switchToFallbackMode("OpenCV 加載超時");
+            }
+        }, 8000);
+
+        function switchToFallbackMode(reason) {
+            state.detectorMode = 'motion';
+            opencvStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-500"></i> ${reason}，已切換至「動態感應雷達」`;
+            enableStartButton();
+        }
+
+        function enableStartButton() {
+            clearTimeout(openCvTimeout);
+            startBtn.disabled = false;
+            startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            startBtn.classList.add('hover:opacity-90', 'active:scale-95');
+        }
+
+        // 檢查 OpenCV.js 是否異步完成
+        var Module = {
+            onRuntimeInitialized: function() {
+                onOpenCvLoaded();
+            }
+        };
+
         // 啟動後置相機鏡頭
         async function initCamera() {
-            // 檢查是否支援原生外型偵測 API (FaceDetector)
-            if ('FaceDetector' in window) {
-                try {
-                    // 實例化原生人臉偵測器，啟用快速模式以利手遊高幀率需求
-                    state.faceDetectorInstance = new FaceDetector({
-                        fastMode: true,
-                        maxDetectedFaces: 2
-                    });
-                    state.detectorMode = 'ai';
-                    controlInfo.innerHTML = "<span class='text-emerald-400'><i class='fa-solid fa-brain mr-1'></i> AI 智慧辨識啟動！</span><br>成功鎖定您朋友的臉部。按下 [FIRE] 給他迎頭痛擊！";
-                } catch (e) {
-                    console.warn("FaceDetector 初始化失敗，將自動使用動態追蹤模式", e);
-                    state.detectorMode = 'motion';
-                }
-            } else {
-                console.info("瀏覽器不支援原生 FaceDetector，改用高性能動態捕捉追蹤");
-                state.detectorMode = 'motion';
-            }
-
             try {
                 const constraints = {
                     audio: false,
@@ -455,74 +514,84 @@
                     videoFeed.srcObject = stream;
                 } catch (innerErr) {
                     console.error("相機加載失敗：", innerErr);
+                    // 相機徹底失效，降級至模擬器
                     state.detectorMode = 'simulation';
-                    controlInfo.innerHTML = "<span class='text-yellow-400'><i class='fa-solid fa-triangle-exclamation'></i> 偵測到相機遭封鎖</span><br>已為您自動載入「數位雷達模擬器」！鎖定框將在螢幕上飄移。";
                 }
+            }
+
+            // 初始化 OpenCV 記憶體矩陣 (避免在 frame 循環中重複配置導致 OOM)
+            if (state.detectorMode === 'opencv' && state.openCvLoaded) {
+                state.srcMat = new cv.Mat(hiddenCv.height, hiddenCv.width, cv.CV_8UC4);
+                state.grayMat = new cv.Mat(hiddenCv.height, hiddenCv.width, cv.CV_8UC1);
+                state.facesRects = new cv.RectVector();
+                controlInfo.innerHTML = "<span class='text-emerald-400'><i class='fa-solid fa-brain mr-1'></i> OpenCV AI 人臉偵測啟動！</span><br>成功在鏡頭中追蹤朋友。按下 [FIRE] 給他迎頭痛擊！";
+            } else if (state.detectorMode === 'motion') {
+                controlInfo.innerHTML = "<span class='text-cyan-400'><i class='fa-solid fa-radar mr-1'></i> 動態偵測雷達啟動！</span><br>鎖定晃動或移動的人。按下 [FIRE] 開火！";
             }
         }
 
-        // 高性能、相容雙引擎的鎖定算法
+        // 偵測與鎖定算法
         let prevFrameData = null;
         let changeDiagnoseTimer = 0;
         let mockTargetTime = 0;
 
         function scanForHumanTarget(deltaTime, timestamp) {
-            // 如果相機權限遭拒，切換為模擬雷達軌跡
+            // 如果相機權限遭拒或尚未準備妥當，切換為模擬雷達軌跡
             if (state.detectorMode === 'simulation' || videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
                 mockHumanTarget(deltaTime);
                 return;
             }
 
-            // === 模式 1：原生 AI 臉部偵測 (FaceDetector API) ===
-            if (state.detectorMode === 'ai' && state.faceDetectorInstance) {
-                detectorTypeText.innerHTML = "<i class='fa-solid fa-brain text-emerald-400 mr-1'></i> LOCK-ON: AI FACE TARGET";
+            // === 模式 1：極其精準的原生 OpenCV 人臉識別 ===
+            if (state.detectorMode === 'opencv' && state.openCvLoaded && state.faceCascade) {
+                detectorTypeText.innerHTML = "<i class='fa-solid fa-brain text-emerald-400 mr-1'></i> LOCK-ON: OPENCV AI FACE";
                 
-                // 節流偵測：限制每 80 毫秒執行一次 FaceDetector 以維持極致的 60FPS
-                if (!state.isAiDetecting && timestamp - state.lastAiDetectTime > 80) {
-                    state.isAiDetecting = true;
-                    state.faceDetectorInstance.detect(videoFeed)
-                        .then(faces => {
-                            state.isAiDetecting = false;
-                            state.lastAiDetectTime = timestamp;
+                try {
+                    // 1. 將影格影像繪製到隱藏 Canvas 上
+                    hiddenCtx.drawImage(videoFeed, 0, 0, hiddenCv.width, hiddenCv.height);
+                    const imgData = hiddenCtx.getImageData(0, 0, hiddenCv.width, hiddenCv.height);
+                    
+                    // 2. 將影像資料填充進 OpenCV Mat 矩陣中
+                    state.srcMat.data.set(imgData.data);
+                    
+                    // 3. 轉為灰階影格提升運算效率，並進行直方圖等化優化逆光效果
+                    cv.cvtColor(state.srcMat, state.grayMat, cv.COLOR_RGBA2GRAY);
+                    cv.equalizeHist(state.grayMat, state.grayMat);
+                    
+                    // 4. 偵測人臉
+                    state.faceCascade.detectMultiScale(state.grayMat, state.facesRects, 1.15, 3, 0, new cv.Size(30, 30));
+                    
+                    if (state.facesRects.size() > 0) {
+                        // 取得首個人臉
+                        const face = state.facesRects.get(0);
+                        
+                        // 計算縮放座標
+                        const videoW = videoFeed.videoWidth || 1280;
+                        const videoH = videoFeed.videoHeight || 720;
+                        const scaleX = gameCanvas.width / hiddenCv.width;
+                        const scaleY = gameCanvas.height / hiddenCv.height;
 
-                            if (faces && faces.length > 0) {
-                                // 取得首位被鎖定的面部特徵
-                                const face = faces[0];
-                                const box = face.boundingBox;
+                        // 大致貼合頭部比例 (寬度 140)
+                        const targetX = (face.x + face.width / 2) * scaleX;
+                        const targetY = (face.y + face.height / 2) * scaleY;
+                        const targetW = 140;
+                        const targetH = 140;
 
-                                // 取得影片跟 Canvas 縮放比例，作精準座標投射
-                                const videoW = videoFeed.videoWidth || 1280;
-                                const videoH = videoFeed.videoHeight || 720;
-                                const scaleX = gameCanvas.width / videoW;
-                                const scaleY = gameCanvas.height / videoH;
+                        // 絲滑 Lerp 追蹤
+                        state.target.x = state.target.x + (targetX - state.target.x) * 0.16;
+                        state.target.y = state.target.y + (targetY - state.target.y) * 0.16;
+                        state.target.width = state.target.width + (targetW - state.target.width) * 0.12;
+                        state.target.height = state.target.height + (targetH - state.target.height) * 0.12;
 
-                                // 投射回全螢幕
-                                const targetX = (box.x + box.width / 2) * scaleX;
-                                const targetY = (box.y + box.height / 2) * scaleY;
-                                const targetW = box.width * scaleX;
-                                const targetH = box.height * scaleY;
+                        state.target.lockStrength = Math.min(100, state.target.lockStrength + 25);
+                        state.target.locked = state.target.lockStrength > 20;
 
-                                // 平滑緩動 (LERP) 更新目標人臉，黏著度極高且毫無抖動
-                                state.target.x = state.target.x + (targetX - state.target.x) * 0.15;
-                                state.target.y = state.target.y + (targetY - state.target.y) * 0.15;
-                                state.target.width = state.target.width + (targetW - state.target.width) * 0.12;
-                                state.target.height = state.target.height + (targetH - state.target.height) * 0.12;
-
-                                state.target.lockStrength = Math.min(100, state.target.lockStrength + 25);
-                                state.target.locked = state.target.lockStrength > 20;
-
-                                lockIndicator.classList.remove('opacity-0');
-                            } else {
-                                // 沒抓到人臉時緩慢淡出 (鎖定滯留 3-4 秒)
-                                fadeOutLock();
-                            }
-                        })
-                        .catch(err => {
-                            console.error("AI 偵測出錯：", err);
-                            state.isAiDetecting = false;
-                            // 若 AI 發生錯誤，無縫降級為動態影格像素偵測
-                            state.detectorMode = 'motion';
-                        });
+                        lockIndicator.classList.remove('opacity-0');
+                    } else {
+                        fadeOutLock();
+                    }
+                } catch (e) {
+                    console.error("OpenCV 人臉偵測發生異常：", e);
                 }
             }
             
@@ -574,8 +643,8 @@
                     const scaleX = gameCanvas.width / hiddenCv.width;
                     const scaleY = gameCanvas.height / hiddenCv.height;
 
-                    const targetW = 160;
-                    const targetH = 160;
+                    const targetW = 150;
+                    const targetH = 150;
 
                     const targetX = minX * scaleX + (maxX - minX) * scaleX / 2;
                     const targetY = minY * scaleY + (maxY - minY) * scaleY * 0.3;
@@ -623,8 +692,8 @@
             
             state.target.x = state.target.x + (cx - state.target.x) * 0.08;
             state.target.y = state.target.y + (cy - state.target.y) * 0.08;
-            state.target.width = state.target.width + (160 - state.target.width) * 0.1;
-            state.target.height = state.target.height + (160 - state.target.height) * 0.1;
+            state.target.width = state.target.width + (140 - state.target.width) * 0.1;
+            state.target.height = state.target.height + (140 - state.target.height) * 0.1;
             state.target.locked = true;
             state.target.lockStrength = 80;
             
@@ -639,7 +708,7 @@
             }
         }
 
-        // 繪製虛擬雷達網格背景
+        // 繪製虛擬雷達網格背景 (無鏡頭時的炫酷科幻 HUD 填充)
         function drawVirtualBackground(ctx) {
             ctx.fillStyle = "#07070c";
             ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
@@ -687,8 +756,9 @@
             
             ctx.fillStyle = "rgba(148, 163, 184, 0.35)";
             ctx.font = '11px Orbitron, sans-serif';
+            ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
-            ctx.fillText("SIMULATION MODE ACTIVE (NO WEBCAM)", gameCanvas.width / 2, gameCanvas.height - 35);
+            ctx.fillText("SIMULATION RADAR MODE (WEBCAM OFFLINE)", gameCanvas.width / 2, gameCanvas.height - 35);
         }
 
         // 搞怪表情包爆散粒子
@@ -1109,7 +1179,7 @@
 
             ctx.fillStyle = isTargetCenter ? '#f43f5e' : '#22d3ee';
             ctx.font = 'bold 11px Orbitron, sans-serif';
-            ctx.fillText(state.detectorMode === 'ai' ? "TARGET: AI FACE DETECTED" : "TARGET: HOMO SAPIENS (HEAD)", panelX + 8, panelY + 16);
+            ctx.fillText(state.detectorMode === 'opencv' ? "TARGET: OPENCV AI FACE" : "TARGET: HOMO SAPIENS (HEAD)", panelX + 8, panelY + 16);
 
             ctx.fillStyle = '#94a3b8';
             ctx.font = 'bold 9px "Microsoft JhengHei", sans-serif';
