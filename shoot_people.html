@@ -1,1137 +1,1551 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" class="h-full">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AR 都市突襲 - 惡搞真人版</title>
-    <!-- 載入 Tailwind CSS 用於炫酷 UI 佈局 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR 惡搞特工：真人鎖定槍戰 (Meme Tactical Shooter)</title>
+    <!-- Tailwind CSS for modern layout styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 載入 Font Awesome 圖標 -->
+    <!-- FontAwesome for futuristic sci-fi icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 載入 Orbitron 與 Rajdhani 科幻字體 -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <!-- Import Google Fonts (Inter & Orbitron for sci-fi look) -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
     <style>
         body {
-            font-family: 'Rajdhani', sans-serif;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-            overflow: hidden;
+            font-family: 'Inter', sans-serif;
             background-color: #050508;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .scifi-font {
             font-family: 'Orbitron', sans-serif;
         }
-        /* 科幻掃描線特效 */
-        .scanlines::before {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(0, 255, 0, 0.04), rgba(255, 0, 255, 0.02), rgba(0, 255, 255, 0.04));
-            z-index: 10;
-            background-size: 100% 4px, 6px 100%;
-            pointer-events: none;
+        
+        /* Custom Keyframe Animations for Prank Effects */
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100vh); }
         }
-        /* 霓虹邊框閃爍 */
-        @keyframes cyber-pulse {
-            0%, 100% { border-color: rgba(34, 211, 238, 0.5); box-shadow: 0 0 10px rgba(34, 211, 238, 0.3); }
-            50% { border-color: rgba(236, 72, 153, 0.8); box-shadow: 0 0 20px rgba(236, 72, 153, 0.6); }
+        .scanline-effect {
+            animation: scanline 6s linear infinite;
         }
-        .cyber-border {
-            border: 2px solid rgba(6, 182, 212, 0.5);
-            animation: cyber-pulse 4s infinite;
+
+        @keyframes glitch {
+            0% { clip-path: inset(40% 0 61% 0); }
+            20% { clip-path: inset(92% 0 1% 0); }
+            40% { clip-path: inset(15% 0 80% 0); }
+            60% { clip-path: inset(80% 0 5% 0); }
+            80% { clip-path: inset(3% 0 92% 0); }
+            100% { clip-path: inset(40% 0 61% 0); }
         }
-        /* 射擊時的螢幕震動與閃紅光 */
-        @keyframes screen-shake {
-            0% { transform: translate(0, 0) scale(1); }
-            10% { transform: translate(-4px, -6px) scale(1.02); }
-            30% { transform: translate(5px, 4px) scale(1.01); }
-            50% { transform: translate(-5px, 2px) scale(1.03); }
-            70% { transform: translate(4px, -3px) scale(1.01); }
-            90% { transform: translate(-2px, 3px) scale(1.01); }
-            100% { transform: translate(0, 0) scale(1); }
+        .glitch-text {
+            animation: glitch 1s linear infinite alternate-reverse;
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 0.2; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+        .pulse-scanner {
+            animation: pulse-soft 2s ease-in-out infinite;
+        }
+
+        /* Screen Shake for Weapon Firing */
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            10% { transform: translate(-8px, -5px) scale(1.01); }
+            20% { transform: translate(8px, 5px) scale(1.01); }
+            30% { transform: translate(-10px, 3px) scale(1); }
+            40% { transform: translate(6px, -6px) scale(1.01); }
+            50% { transform: translate(-5px, 5px) scale(1); }
+            60% { transform: translate(7px, -2px) scale(1.01); }
+            70% { transform: translate(-4px, -4px) scale(1); }
+            80% { transform: translate(4px, 4px) scale(1.01); }
+            90% { transform: translate(-2px, 2px) scale(1); }
         }
         .shake-active {
-            animation: screen-shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+            animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
         }
-        /* 隱藏預設滾動條 */
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
-            display: none;
+            width: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ec4899;
+            border-radius: 10px;
         }
     </style>
+
+    <!-- Tracking.js for super lightweight, fully offline local face tracking -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
 </head>
-<body class="relative h-full w-full select-none overflow-hidden text-white scanlines">
+<body class="relative w-screen h-screen overflow-hidden text-white flex flex-col items-center justify-center">
 
-    <!-- 背景鏡頭與渲染畫布 -->
-    <div id="game-container" class="absolute inset-0 w-full h-full z-0 overflow-hidden">
-        <video id="video-feed" class="absolute inset-0 w-full h-full object-cover z-0" autoplay playsinline muted></video>
-        <!-- 主渲染畫布：用於繪製人體/人臉鎖定框、雷射、表情包粒子、數值 -->
-        <canvas id="game-canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></canvas>
-    </div>
-
-    <!-- 射擊閃光與受傷閃紅特效疊加層 -->
-    <div id="flash-effect" class="absolute inset-0 z-20 pointer-events-none transition-all duration-75 bg-transparent opacity-0"></div>
-
-    <!-- 啟動遊戲覆蓋層 (相機權限請求與說明) -->
-    <div id="permission-screen" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 bg-opacity-95 p-6 text-center">
-        <div class="max-w-md w-full border border-pink-500/30 bg-slate-900/80 backdrop-blur-md rounded-2xl p-8 shadow-2xl shadow-pink-500/10">
-            <h1 class="scifi-font text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400 mb-2">AR HUMAN ASSAULT</h1>
-            <p class="text-xs tracking-widest text-pink-400 uppercase font-semibold mb-6">AR 真人鎖定·惡搞射擊系統</p>
+    <!-- AR Viewport Container -->
+    <div id="game-container" class="relative w-full h-full flex flex-col justify-between overflow-hidden">
+        
+        <!-- Live Camera Stream (Mirrored by default for selfies, can toggle) -->
+        <div id="viewport-wrapper" class="absolute inset-0 w-full h-full z-0 overflow-hidden bg-radial from-slate-900 to-black">
+            <!-- Cam feedback -->
+            <video id="video-feed" class="absolute w-full h-full object-cover pointer-events-none" autoplay playsinline muted loop></video>
+            <!-- Canvas Overlay for Tracking and FX -->
+            <canvas id="fx-canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></canvas>
             
-            <div class="text-left space-y-4 mb-8 text-slate-300 text-sm border-y border-slate-800 py-6">
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-pink-950 flex items-center justify-center text-pink-400 border border-pink-500/20 shrink-0">
-                        <i class="fa-solid fa-camera text-xs"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-200 font-sans">後置相機許可 (必須)</h4>
-                        <p class="text-xs text-slate-400 font-sans">用於在畫面上即時捕捉並掃描您身邊的朋友（真人）。</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-cyan-950 flex items-center justify-center text-cyan-400 border border-cyan-500/20 shrink-0">
-                        <i class="fa-solid fa-radar text-xs"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-200 font-sans">極速動態生物雷達</h4>
-                        <p class="text-xs text-slate-400 font-sans">無須加載龐大 AI 模型！原生 60FPS 動態像素差值演算法，只要前方有人晃動，即可自動鎖定頭部與身體！</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-8 h-8 rounded-full bg-yellow-950 flex items-center justify-center text-yellow-400 border border-yellow-500/20 shrink-0">
-                        <i class="fa-solid fa-volume-high text-xs"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-bold text-slate-200 font-sans">合成整人音效</h4>
-                        <p class="text-xs text-slate-400 font-sans">產生極具喜感的小丑喇叭與尖叫雞音效，拉滿惡搞效果。</p>
-                    </div>
-                </div>
-            </div>
-
-            <button id="start-btn" class="scifi-font w-full py-4 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 hover:opacity-90 rounded-xl font-bold tracking-wider text-white text-lg shadow-lg shadow-pink-500/20 transition-all active:scale-95 flex items-center justify-center gap-2">
-                <i class="fa-solid fa-face-viewfinder"></i> 啟動人類偵測雷達
-            </button>
-            <p class="text-[10px] text-slate-500 mt-4 text-center">本系統 100% 於本地運行，不需加載外部組件。若拒絕相機權限，會自動啟用模擬雷達模式！</p>
-        </div>
-    </div>
-
-    <!-- 遊戲主要 HUD 控制層 -->
-    <div id="hud-layer" class="absolute inset-0 z-30 flex flex-col justify-between p-4 pointer-events-none select-none">
-        <!-- 頂部資訊：等級、頭銜、分數 -->
-        <div class="w-full flex justify-between items-start pt-safe">
-            <!-- 玩家整人等級 -->
-            <div class="flex flex-col bg-slate-900/80 border border-pink-500/30 rounded-xl px-4 py-2 backdrop-blur-md max-w-[180px]">
-                <div class="flex justify-between items-center gap-4">
-                    <span class="scifi-font text-pink-400 font-bold text-xs tracking-widest uppercase">PRANK LEVEL</span>
-                    <span id="level-display" class="scifi-font text-xl font-black text-pink-500">01</span>
-                </div>
-                <!-- 等級稱號 -->
-                <div class="text-[10px] text-cyan-300 font-sans font-bold tracking-wider truncate mt-0.5" id="title-display">
-                    菜鳥整人實習生
-                </div>
-                <!-- 經驗值條 -->
-                <div class="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden mt-1.5 border border-pink-500/10">
-                    <div id="xp-bar" class="h-full bg-gradient-to-r from-pink-500 to-cyan-500 transition-all duration-300" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- Combo 連擊 -->
-            <div id="combo-container" class="flex flex-col items-center justify-center opacity-0 scale-75 transition-all duration-200 bg-cyan-500/20 border border-cyan-400/40 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                <span class="scifi-font text-cyan-400 font-black text-lg leading-none" id="combo-display">2 COMBO</span>
-                <span class="text-[9px] text-cyan-300/80 tracking-widest uppercase">整蠱狂熱中</span>
-            </div>
-
-            <!-- 惡搞積分 -->
-            <div class="flex flex-col items-end bg-slate-900/80 border border-cyan-500/30 rounded-xl px-4 py-2 backdrop-blur-md">
-                <span class="text-[10px] text-cyan-400 tracking-widest uppercase font-semibold">PRANK SCORE</span>
-                <span id="score-display" class="scifi-font text-2xl font-black text-cyan-400">000,000</span>
-            </div>
+            <!-- Futuristic Scanline Grid -->
+            <div class="absolute inset-0 pointer-events-none z-10 opacity-[0.08] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,3px_100%]"></div>
+            <!-- Laser Scan Line -->
+            <div id="laser-line" class="absolute top-0 left-0 w-full h-[2px] bg-cyan-500 shadow-[0_0_10px_#06b6d4] scanline-effect pointer-events-none z-10"></div>
         </div>
 
-        <!-- 輔助鎖定提示 -->
-        <div class="flex-grow w-full flex items-center justify-center pointer-events-none">
-            <div id="lock-indicator" class="px-4 py-1.5 rounded-full border border-yellow-500/30 bg-yellow-950/40 text-yellow-400 font-bold text-xs tracking-widest uppercase animate-pulse transition-opacity duration-300 opacity-0">
-                <i class="fa-solid fa-triangle-exclamation mr-1"></i> <span id="detector-type-text">LOCK-ON: HUMAN TARGET</span>
+        <!-- STAGE 1: Tech UI top panel -->
+        <header class="relative z-20 w-full p-4 flex justify-between items-start pointer-events-none">
+            <!-- Left: Player Stats Card -->
+            <div class="flex flex-col gap-1 bg-black/60 backdrop-blur-md p-3 rounded-xl border border-cyan-500/30 shadow-[0_4px_20px_rgba(6,182,212,0.15)] pointer-events-auto">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold px-2 py-0.5 bg-pink-500 rounded-full animate-pulse uppercase scifi-font tracking-widest text-[10px]">Troll Agent</span>
+                    <span id="level-display" class="scifi-font text-cyan-400 font-bold">LV.01</span>
+                </div>
+                <div class="mt-1">
+                    <div class="text-[10px] text-gray-400 font-medium">Troll Score / 惡搞積分</div>
+                    <div id="score-display" class="scifi-font text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-cyan-400">000,000</div>
+                </div>
+                <div class="mt-1 w-36 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+                    <div id="xp-bar" class="bg-gradient-to-r from-cyan-400 to-pink-500 h-1.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+                <div class="text-[9px] text-gray-400 flex justify-between mt-0.5 font-mono">
+                    <span>NEXT LEVEL</span>
+                    <span id="xp-text">10 / 100</span>
+                </div>
+            </div>
+
+            <!-- Right: Weapon, Audio, and Cam Control Switches -->
+            <div class="flex flex-col gap-2 items-end pointer-events-auto">
+                <!-- Mini radar map -->
+                <div class="relative w-20 h-20 rounded-full border border-pink-500/30 bg-black/50 overflow-hidden flex items-center justify-center backdrop-blur-xs shadow-[0_0_10px_rgba(236,72,153,0.1)]">
+                    <div class="absolute inset-0 border-t-2 border-pink-500/50 rounded-full animate-spin [animation-duration:3s]"></div>
+                    <div class="absolute w-12 h-12 border border-pink-500/20 rounded-full"></div>
+                    <div class="absolute w-6 h-6 border border-pink-500/10 rounded-full"></div>
+                    <div class="absolute w-0.5 h-16 bg-pink-500/30"></div>
+                    <div class="absolute h-0.5 w-16 bg-pink-500/30"></div>
+                    <!-- Small blinking targets -->
+                    <div id="radar-blip-1" class="absolute w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping" style="top: 25%; left: 65%;"></div>
+                    <div id="radar-blip-2" class="absolute w-1.5 h-1.5 bg-pink-500 rounded-full animate-ping" style="top: 70%; left: 30%;"></div>
+                </div>
+
+                <!-- Action menu toggle button -->
+                <button id="btn-settings-toggle" class="p-2.5 bg-black/60 rounded-full border border-cyan-500/40 text-cyan-400 shadow-md hover:bg-cyan-500 hover:text-black transition-all">
+                    <i class="fa-solid fa-gears text-lg"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- STAGE 2: Central targeting crosshair -->
+        <main class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <!-- Cyber Crosshair -->
+            <div id="crosshair-system" class="relative w-44 h-44 flex items-center justify-center transition-transform duration-100">
+                <!-- Circular outer scope -->
+                <div class="absolute inset-0 border border-dashed border-cyan-500/30 rounded-full animate-spin [animation-duration:20s]"></div>
+                <!-- Animated brackets -->
+                <div class="absolute w-36 h-36 border-t-2 border-l-2 border-pink-500 rounded-tl-xl opacity-80"></div>
+                <div class="absolute w-36 h-36 border-t-2 border-r-2 border-pink-500 rounded-tr-xl opacity-80"></div>
+                <div class="absolute w-36 h-36 border-b-2 border-l-2 border-pink-500 rounded-bl-xl opacity-80"></div>
+                <div class="absolute w-36 h-36 border-b-2 border-r-2 border-pink-500 rounded-br-xl opacity-80"></div>
+                <!-- Inner warning circle -->
+                <div id="target-lock-ring" class="absolute w-24 h-24 border-2 border-cyan-400 rounded-full scale-75 opacity-60 transition-all duration-300"></div>
+                <!-- Scanning text readout inside crosshair -->
+                <div class="absolute text-[8px] text-cyan-400 font-mono scifi-font tracking-widest translate-y-12 bg-black/40 px-1 py-0.5 rounded">
+                    DIST: <span id="target-dist">SCANNING</span>
+                </div>
+                <!-- Dead center pin -->
+                <div class="w-2.5 h-2.5 bg-red-500 rounded-full border border-white shadow-[0_0_10px_#f43f5e] z-10 animate-pulse"></div>
+            </div>
+        </main>
+
+        <!-- Weapons Display in First Person (Bottom right Blaster) -->
+        <div id="weapon-viewport" class="absolute bottom-0 right-0 w-[320px] h-[320px] pointer-events-none z-20 flex items-end justify-end overflow-visible select-none">
+            <!-- Weapon swaying container -->
+            <div id="weapon-holder" class="relative origin-bottom-right transition-transform duration-75 select-none translate-y-8 translate-x-4">
+                <!-- Muzzle Flash Visual Container -->
+                <div id="muzzle-flash" class="absolute -top-12 -left-12 w-40 h-40 bg-radial from-white via-yellow-400 to-transparent rounded-full opacity-0 pointer-events-none mix-blend-screen scale-50 transition-all duration-75"></div>
+                
+                <!-- Blaster SVG Model -->
+                <svg id="blaster-svg" class="w-80 h-80 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Gun base chassis -->
+                    <path d="M120 280 L220 180 L350 220 L350 380 L140 380 Z" fill="#1e293b" stroke="#334155" stroke-width="4"/>
+                    <!-- Cyber metallic plate -->
+                    <path d="M180 230 L320 230 L350 350 L200 350 Z" fill="#0f172a" />
+                    <!-- Bright Weapon Neon Stripe (Changes Color dynamically) -->
+                    <path id="weapon-stripe" d="M210 240 L300 240 L310 260 L220 260 Z" fill="#22d3ee" class="animate-pulse"/>
+                    <!-- Cyber Battery Core -->
+                    <rect x="250" y="280" width="60" height="25" rx="5" fill="#020617" stroke="#ec4899" stroke-width="2"/>
+                    <rect id="battery-level" x="254" y="284" width="52" height="17" rx="3" fill="#ec4899"/>
+                    <!-- Barrel System -->
+                    <rect x="80" y="195" width="140" height="40" rx="4" fill="#334155" stroke="#475569" stroke-width="3" transform="rotate(-30, 80, 195)"/>
+                    <rect x="60" y="190" width="40" height="26" rx="2" fill="#0f172a" stroke="#22d3ee" stroke-width="2" transform="rotate(-30, 60, 190)"/>
+                    <!-- Power cable bundle -->
+                    <path d="M160 260 Q190 290 240 290" stroke="#f43f5e" stroke-width="4" fill="none"/>
+                </svg>
             </div>
         </div>
 
-        <!-- 底部控制：過熱度、彈藥、射擊按鈕 -->
-        <div class="w-full flex flex-col gap-3 pb-safe">
-            <!-- 武器過熱指示器 -->
-            <div class="w-full max-w-xs mx-auto flex flex-col items-center bg-slate-900/60 border border-slate-800 px-3 py-1.5 rounded-lg backdrop-blur-sm">
-                <div class="flex justify-between w-full text-[10px] text-slate-400 font-bold px-1 mb-1">
-                    <span class="flex items-center gap-1"><i class="fa-solid fa-fire-flame-curved text-pink-500"></i> 雷射過熱度 (HEAT)</span>
-                    <span id="heat-percent">0%</span>
-                </div>
-                <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
-                    <div id="heat-bar" class="h-full bg-gradient-to-r from-cyan-400 via-pink-500 to-red-500 rounded-full transition-all duration-100" style="width: 0%"></div>
-                </div>
-                <!-- 過熱警報 -->
-                <div id="overheat-alert" class="hidden text-[10px] text-red-500 font-black tracking-widest animate-bounce mt-1">
-                    <i class="fa-solid fa-triangle-exclamation"></i> 系統過熱中！整蠱冷卻強制啟動
-                </div>
-            </div>
-
-            <!-- 底部動作按鈕區域 -->
-            <div class="w-full flex justify-between items-center px-2">
-                <!-- 惡搞說明 -->
-                <div class="flex flex-col items-start bg-slate-950/70 border border-slate-800 p-2.5 rounded-xl pointer-events-auto max-w-[200px]">
-                    <span class="text-[9px] text-pink-400 tracking-wider font-bold">
-                        <i class="fa-solid fa-circle-info mr-1"></i>偵測核心：
-                    </span>
-                    <span id="control-info" class="text-[10px] text-slate-300 font-sans font-medium leading-relaxed">
-                        對準你前面的朋友！雷達鎖定後按下 [FIRE] 給他迎頭痛擊！
-                    </span>
-                </div>
-
-                <!-- 巨大的發射按鈕 -->
-                <div class="pointer-events-auto">
-                    <button id="shoot-btn" class="relative flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-pink-500 via-purple-600 to-cyan-500 border-4 border-slate-950 shadow-2xl transition-transform active:scale-90 select-none cursor-pointer focus:outline-none">
-                        <!-- 按鈕微光特效 -->
-                        <span class="absolute inset-0 rounded-full bg-pink-500 opacity-20 blur animate-ping"></span>
-                        <div class="flex flex-col items-center justify-center">
-                            <span class="scifi-font text-white font-black text-sm tracking-widest">FIRE</span>
-                            <i class="fa-solid fa-bolt text-lg text-white mt-0.5"></i>
-                        </div>
+        <!-- STAGE 3: Prank weapon panel & shooter triggers -->
+        <footer class="relative z-20 w-full p-6 flex flex-col items-center gap-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+            <!-- Weapon Switcher & Custom text box -->
+            <div class="w-full max-w-lg flex flex-col gap-2">
+                <!-- Weapon carousel -->
+                <div class="flex justify-around items-center bg-black/70 backdrop-blur-md p-1.5 rounded-full border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)]">
+                    <button onclick="selectWeapon('laser')" id="wpn-laser" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border-2 border-cyan-400 bg-cyan-900/30 text-cyan-400 font-bold transition-all duration-200">
+                        <i class="fa-solid fa-bolt-lightning text-lg mb-0.5"></i>
+                        <span class="text-[9px] uppercase tracking-wider">光學雷射</span>
+                    </button>
+                    <button onclick="selectWeapon('confetti')" id="wpn-confetti" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-pink-400 transition-all duration-200">
+                        <i class="fa-solid fa-gift text-lg mb-0.5"></i>
+                        <span class="text-[9px] uppercase tracking-wider">彩帶禮炮</span>
+                    </button>
+                    <button onclick="selectWeapon('water')" id="wpn-water" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-blue-400 transition-all duration-200">
+                        <i class="fa-solid fa-droplet text-lg mb-0.5"></i>
+                        <span class="text-[9px] uppercase tracking-wider">超能噴水</span>
+                    </button>
+                    <button onclick="selectWeapon('love')" id="wpn-love" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-rose-400 transition-all duration-200">
+                        <i class="fa-solid fa-heart-pulse text-lg mb-0.5"></i>
+                        <span class="text-[9px] uppercase tracking-wider">滿滿愛意</span>
                     </button>
                 </div>
             </div>
+
+            <!-- Weapon state & Massive Shoot Triggers -->
+            <div class="w-full max-w-lg flex items-center justify-between gap-4 mt-1">
+                <!-- Ammo counter HUD (Left) -->
+                <div class="flex flex-col items-start bg-black/60 p-2.5 rounded-xl border border-gray-700/50 w-28">
+                    <span class="text-[9px] text-gray-400 font-bold uppercase scifi-font tracking-widest">Ammunition</span>
+                    <div class="flex items-baseline gap-1 mt-0.5">
+                        <span id="ammo-count" class="scifi-font text-2xl font-black text-rose-500">10</span>
+                        <span class="text-xs text-gray-500 font-mono">/10</span>
+                    </div>
+                    <!-- Bullet graphical display -->
+                    <div class="flex gap-0.5 mt-1.5 w-full">
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
+                    </div>
+                </div>
+
+                <!-- GIANT FIRE BUTTON (Center/Right) -->
+                <button id="btn-shoot" class="relative group active:scale-95 flex-1 h-20 bg-gradient-to-r from-red-600 to-pink-600 rounded-2xl border-b-4 border-red-800 shadow-[0_10px_25px_rgba(220,38,38,0.4)] flex items-center justify-center gap-3 transition-transform overflow-hidden cursor-pointer select-none">
+                    <!-- Overlay flash effect -->
+                    <div class="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity"></div>
+                    <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                    
+                    <i class="fa-solid fa-crosshairs text-2xl text-white animate-pulse"></i>
+                    <span class="text-xl font-black tracking-widest scifi-font text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">開火 (FIRE)</span>
+                </button>
+            </div>
+        </footer>
+
+        <!-- Pop-out Cyber Settings Panel -->
+        <div id="settings-panel" class="absolute right-4 top-20 z-40 w-80 max-h-[70vh] overflow-y-auto bg-slate-950/95 border border-cyan-500/30 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex-col gap-4 hidden transition-all duration-300">
+            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
+                <span class="scifi-font text-cyan-400 font-bold"><i class="fa-solid fa-sliders mr-2"></i>戰術調諧系統</span>
+                <button id="btn-settings-close" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <!-- Custom Hit Text (Prank customization) -->
+            <div class="flex flex-col gap-1.5">
+                <label class="text-xs text-gray-300 font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-signature text-pink-500"></i> 自定義整人語句 (Custom Insult):
+                </label>
+                <input type="text" id="custom-insult-input" value="大笨蛋！！" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-pink-300 focus:outline-hidden focus:border-pink-500 focus:ring-1 focus:ring-pink-500 tracking-wide font-semibold">
+                <p class="text-[9px] text-gray-500">擊中目標時會在鏡頭真人臉上噴射此字句！</p>
+            </div>
+
+            <!-- Toggle switches -->
+            <div class="flex flex-col gap-3 mt-1">
+                <!-- AR Face Tracking Selector -->
+                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-200">真人臉部偵測 (Face AR)</span>
+                        <span class="text-[9px] text-gray-400">使用鏡頭實時定位面部</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-tracking" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                    </label>
+                </div>
+
+                <!-- Sim Target Spawn -->
+                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-200">虛擬惡搞幽靈 (Virtual Targets)</span>
+                        <span class="text-[9px] text-gray-400">在鏡頭周圍飄移的虛擬目標</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-virtual" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
+                    </label>
+                </div>
+
+                <!-- Sound Speak synthesise -->
+                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-200">語音嘲諷 (Audio Roast)</span>
+                        <span class="text-[9px] text-gray-400">手機會用合成語音大聲嘲笑對方</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggle-speak" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+                    </label>
+                </div>
+
+                <!-- Camera Switch (Flip) -->
+                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-bold text-gray-200">翻轉鏡頭 (Flip Camera)</span>
+                        <span class="text-[9px] text-gray-400">前置自拍 / 後置拍朋友</span>
+                    </div>
+                    <button id="btn-camera-flip" class="px-3 py-1.5 bg-slate-800 hover:bg-cyan-500 hover:text-black border border-slate-700 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-camera-rotate"></i> 翻轉
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaderboard list for pranking -->
+            <div class="flex flex-col gap-2 mt-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest scifi-font">👑 特工黑名單榜單</span>
+                <div class="text-[10px] bg-slate-900 rounded-lg p-2 font-mono flex flex-col gap-1 text-slate-300">
+                    <div class="flex justify-between text-yellow-400 font-bold">
+                        <span>1. 埃隆·馬斯克 (SpaceTroll)</span>
+                        <span>999,999分</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>2. 被你射中的大笨蛋 (You)</span>
+                        <span id="board-you-score">0分</span>
+                    </div>
+                    <div class="flex justify-between text-slate-500">
+                        <span>3. 你的普通朋友 (Noob)</span>
+                        <span>-150分</span>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <!-- Pop-up Splash Screens: Level Up & Notification -->
+        <div id="level-up-splash" class="absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-all duration-500 hidden select-none pointer-events-none">
+            <div class="text-center p-8 max-w-sm flex flex-col items-center gap-4 border-2 border-yellow-400 rounded-3xl shadow-[0_0_50px_rgba(234,179,8,0.5)] bg-slate-950 scale-95 transition-transform duration-300">
+                <div class="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center text-black text-5xl animate-bounce shadow-[0_0_20px_#eab308]">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <h2 class="scifi-font text-3xl font-black text-yellow-400 tracking-wider uppercase animate-pulse">Level Up!</h2>
+                <p id="level-badge" class="font-extrabold text-pink-500 text-lg uppercase tracking-wider">整人少將</p>
+                <p class="text-sm text-gray-300">你已被升等！解鎖更強大的惡搞武器特權。多射擊眼前的人以獲取更多積分！</p>
+                <div class="w-full bg-slate-800 p-3 rounded-xl border border-yellow-400/30 font-mono text-[11px] text-yellow-400 flex justify-between">
+                    <span>火力 +20%</span>
+                    <span>嘲諷加倍 +100%</span>
+                </div>
+                <button onclick="dismissLevelUp()" class="pointer-events-auto px-6 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-black font-extrabold rounded-xl transition-all shadow-[0_4px_15px_rgba(234,179,8,0.3)] uppercase tracking-widest text-sm">
+                    繼續惡搞
+                </button>
+            </div>
+        </div>
+
+        <!-- Initializing & Cam Request Screen -->
+        <div id="loading-overlay" class="absolute inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center gap-6 p-6">
+            <div class="relative w-40 h-40 flex items-center justify-center">
+                <!-- Glowing futuristic rings -->
+                <div class="absolute inset-0 border-t-4 border-b-4 border-cyan-400 rounded-full animate-spin [animation-duration:1.5s]"></div>
+                <div class="absolute inset-4 border-r-4 border-l-4 border-pink-500 rounded-full animate-spin [animation-duration:3s] reverse"></div>
+                <i class="fa-solid fa-fingerprint text-5xl text-cyan-400 animate-pulse"></i>
+            </div>
+            
+            <div class="text-center flex flex-col gap-2 max-w-sm">
+                <h1 class="scifi-font text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-300">AR MEME AGENT</h1>
+                <p class="text-xs text-cyan-400/80 font-mono tracking-widest uppercase">系統初始化中...</p>
+                
+                <!-- Loading descriptive steps -->
+                <div class="mt-4 p-3 rounded-xl bg-slate-900 border border-cyan-500/20 font-mono text-left text-[11px] text-gray-400 flex flex-col gap-1.5 shadow-inner">
+                    <div id="init-step-1" class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin text-cyan-400"></i> <span id="text-step-1">正在加載惡搞物理引擎...</span></div>
+                    <div id="init-step-2" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[8px]"></i> 正在配置 Web Audio 合成聲效...</div>
+                    <div id="init-step-3" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[8px]"></i> 正在啟用實時 AR 面部雷達探測器...</div>
+                </div>
+
+                <p class="text-[10px] text-slate-500 leading-relaxed mt-4">
+                    ⚠️ 惡搞提示：請允許相機權限以鎖定您的朋友或自己！若在無鏡頭或不授權環境中，系統會自動切換為 <b>「全息虛擬訓練模式」</b> 讓您一樣能玩得爽快！
+                </p>
+
+                <!-- Trigger button manually if permissions prompt gets stuck -->
+                <button id="btn-start-game" class="hidden mt-4 px-6 py-3 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-xl font-bold tracking-widest text-sm hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-pink-500/20">
+                    啟動戰略鎖定 (START AR HUNT)
+                </button>
+            </div>
+        </div>
+
     </div>
 
-    <!-- 用於底層像素動態比對分析的隱藏 Canvas -->
-    <canvas id="hidden-cv" class="hidden"></canvas>
+    <script>
+        // --- AUDIO SYNTHESIS ENGINE (Using Web Audio API for offline, instant 100% responsive generation) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        const SoundFX = {
+            playLaser() {
+                initAudio();
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(900, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.25);
+                
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            },
+            playConfetti() {
+                initAudio();
+                if (!audioCtx) return;
+                // Pop sound
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.12);
+                
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.12);
+            },
+            playWater() {
+                initAudio();
+                if (!audioCtx) return;
+                // Wet squirt splash
+                const bufferSize = audioCtx.sampleRate * 0.15;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(300, audioCtx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(1100, audioCtx.currentTime + 0.15);
+                
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                noise.start();
+                noise.stop(audioCtx.currentTime + 0.15);
+            },
+            playLove() {
+                initAudio();
+                if (!audioCtx) return;
+                // High sweet chirp
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.2);
+                
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            },
+            playHit() {
+                initAudio();
+                if (!audioCtx) return;
+                // Low meaty bass thump
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(35, audioCtx.currentTime + 0.18);
+                
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.18);
+            },
+            playLevelUp() {
+                initAudio();
+                if (!audioCtx) return;
+                // Upward retro chord
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C E G C E
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+                    
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08 + 0.08);
+                    gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.2);
+                    
+                    osc.start(audioCtx.currentTime + idx * 0.08);
+                    osc.stop(audioCtx.currentTime + idx * 0.08 + 0.2);
+                });
+            },
+            playReload() {
+                initAudio();
+                if (!audioCtx) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.06);
+                
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.12);
+            }
+        };
+
+        // Speech synthesis jokes pool
+        const SpeakPhrases = {
+            hit: [
+                "哎呀！打中你的大腦了，發現全是稻草！",
+                "完美鎖定！你長得實在太有趣了！",
+                "偵測到顏值異常，啟動超級惡搞修正！",
+                "哎呀！目標開始臉紅了！",
+                "太好玩了！這傢伙一臉無辜！",
+                "恭喜！你獲得了被射擊最搞笑獎！",
+                "目標傻笑中，火力全開！"
+            ],
+            levelUp: [
+                "哇！恭喜升級！你已經成為整人界的傳奇特工！",
+                "升級了！解鎖更致命的惡搞戰術，繼續轟炸你眼前的人吧！",
+                "太震撼了！系統判定你為頂級惡搞戰神！"
+            ]
+        };
+
+        function triggerVoiceRoast(type) {
+            if (!gameState.soundSpeak) return;
+            try {
+                window.speechSynthesis.cancel(); // Clear queued speech
+                const pool = SpeakPhrases[type];
+                const phrase = pool[Math.floor(Math.random() * pool.length)];
+                const utterance = new SpeechSynthesisUtterance(phrase);
+                utterance.rate = 1.15;
+                utterance.pitch = 1.25;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.warn("Speech synthesis bypassed.");
+            }
+        }
+    </script>
 
     <script>
-        const state = {
+        // --- CORE GAME STATE ---
+        const gameState = {
             score: 0,
+            highScore: parseInt(localStorage.getItem('ar_troll_highscore')) || 0,
             level: 1,
             xp: 0,
             xpNeeded: 100,
-            combo: 0,
-            comboTimer: null,
-            heat: 0,              // 0 到 100
-            overheated: false,
-            gameActive: false,
-            
-            // 偵測模式狀態
-            detectorMode: 'motion', // 'motion' (高性能動態追蹤), 'simulation' (模擬模式)
-            
-            // 人類目標鎖定狀態 (調整寬容大小，黏著度極高)
-            target: {
-                x: 0,
-                y: 0,
-                width: 150,       
-                height: 150,
-                locked: false,
-                lockStrength: 0, // 0 到 100
-                funnyLabel: "",
-                funnyValue: ""
-            },
-            
-            // 用於儲存雷射特效、粒子特效與浮空文字
-            lasers: [],
-            particles: [],
-            floatingTexts: [],
-            lastTime: 0
+            ammo: 10,
+            maxAmmo: 10,
+            isReloading: false,
+            currentWeapon: 'laser',
+            soundFX: true,
+            soundSpeak: true,
+            faceTrackingEnabled: true,
+            simTargetsEnabled: true,
+            currentFacingMode: 'environment', // Start with environment (back) camera
+            faces: [], // Tracked raw face coordinates
+            virtualTargets: [], // Floating meme targets
+            particles: [], // visual particles
+            splats: [], // full screen or localized splash elements
+            weaponSwayX: 0,
+            weaponSwayY: 0,
+            muzzleFlashActive: false,
+            cameraStream: null,
+            trackingTask: null,
+            lastFrameTime: performance.now()
         };
 
-        // 隨機整人稱號
-        const levelTitles = [
-            "菜鳥整人實習生",
-            "辦公室摸魚獵手",
-            "街頭惡搞小霸王",
-            "社交恐怖份子",
-            "迷因至尊大魔王",
-            "宇宙級整蠱至尊"
-        ];
+        // DOM elements
+        const video = document.getElementById('video-feed');
+        const canvas = document.getElementById('fx-canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('game-container');
+        
+        // Weapons specs config
+        const weaponSpecs = {
+            laser: { color: '#06b6d4', ringColor: 'rgba(6,182,212,0.4)', text: '雷射光學炮', particleCount: 15 },
+            confetti: { color: '#ec4899', ringColor: 'rgba(236,72,153,0.4)', text: '彩帶禮炮', particleCount: 30 },
+            water: { color: '#3b82f6', ringColor: 'rgba(59,130,246,0.4)', text: '超能噴水', particleCount: 20 },
+            love: { color: '#f43f5e', ringColor: 'rgba(244,63,94,0.4)', text: '滿滿愛意', particleCount: 25 }
+        };
 
-        // 隨機鎖定幽默診斷
-        const funnyDiagnoses = [
-            { label: "威脅程度", val: "極低 (剛起床沒吃早餐)" },
-            { label: "DNA 檢測", val: "99% 珍珠奶茶 + 1% 懶散" },
-            { label: "腦部活動", val: "正在播放貓咪迷因影片" },
-            { label: "秘密屬性", val: "社恐指數高達 200%" },
-            { label: "當前狀態", val: "假裝很忙但其實在發呆" },
-            { label: "戰力評估", val: "不如一隻尖叫雞" },
-            { label: "防禦技能", val: "裝聾作啞、一秒入睡" },
-            { label: "核心弱點", val: "被摸肚子會大笑" },
-            { label: "秘密身份", val: "熬夜滑手機世界冠軍" }
-        ];
-
-        // 擊中隨機掉落惡搞字詞與分數
-        const hitSlangs = [
-            { text: "EMOTIONAL DAMAGE!", score: 100, crit: true },
-            { text: "尊嚴流失 -999", score: 80, crit: false },
-            { text: "智商下線 -10", score: 50, crit: false },
-            { text: "單身狗警告!!", score: 120, crit: true },
-            { text: "摸魚抓到了!", score: 90, crit: false },
-            { text: "無情轟炸!", score: 70, crit: false },
-            { text: "荷包大失血!", score: 110, crit: true },
-            { text: "超大號尷尬!", score: 60, crit: false }
-        ];
-
-        // 表情包粒子素材
-        const funnyEmojis = ["😂", "💩", "🤡", "💸", "💔", "🔥", "👻", "💢", "💖"];
-
-        // --- 獲取 DOM 節點 ---
-        const videoFeed = document.getElementById('video-feed');
-        const gameCanvas = document.getElementById('game-canvas');
-        const ctx = gameCanvas.getContext('2d');
-        const hiddenCv = document.getElementById('hidden-cv');
-        const hiddenCtx = hiddenCv.getContext('2d');
-        const permissionScreen = document.getElementById('permission-screen');
-        const startBtn = document.getElementById('start-btn');
-        const shootBtn = document.getElementById('shoot-btn');
-        const flashEffect = document.getElementById('flash-effect');
-
-        // HUD 元素
-        const scoreDisplay = document.getElementById('score-display');
-        const levelDisplay = document.getElementById('level-display');
-        const titleDisplay = document.getElementById('title-display');
-        const xpBar = document.getElementById('xp-bar');
-        const heatBar = document.getElementById('heat-bar');
-        const heatPercent = document.getElementById('heat-percent');
-        const overheatAlert = document.getElementById('overheat-alert');
-        const comboContainer = document.getElementById('combo-container');
-        const comboDisplay = document.getElementById('combo-display');
-        const lockIndicator = document.getElementById('lock-indicator');
-        const detectorTypeText = document.getElementById('detector-type-text');
-        const controlInfo = document.getElementById('control-info');
-
-        // --- 調整畫布尺寸 ---
-        function resizeCanvas() {
-            gameCanvas.width = window.innerWidth;
-            gameCanvas.height = window.innerHeight;
-            // 隱藏畫布尺寸：設定為 120x90 像素，既極速省電，又擁有超高的動態對比靈敏度
-            hiddenCv.width = 120;
-            hiddenCv.height = 90;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // 搞怪音效合成引擎 (使用 Web Audio API，免加載外部 mp3)
-        class FunnySoundEngine {
-            constructor() {
-                this.ctx = null;
+        // --- CAMERA STREAM INITIATOR ---
+        async function startCamera(facingMode = 'environment') {
+            if (gameState.cameraStream) {
+                gameState.cameraStream.getTracks().forEach(track => track.stop());
             }
-            init() {
-                if (!this.ctx) {
-                    try {
-                        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    } catch (e) {
-                        console.warn("未偵測到 Web Audio 支援");
-                    }
-                }
-                if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume();
-                }
-            }
-            // 搞怪滑音開槍聲 (雷射滑音)
-            playShoot() {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                
-                osc.type = 'sawtooth';
-                const now = this.ctx.currentTime;
-                osc.frequency.setValueAtTime(300, now);
-                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.08);
-                osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
-                
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
-                
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                
-                osc.start();
-                osc.stop(now + 0.2);
-            }
-            // 尖叫雞與彈簧啵嚶擊中聲
-            playExplosion() {
-                if (!this.ctx) return;
-                const now = this.ctx.currentTime;
-                
-                // 尖叫雞高音
-                const osc1 = this.ctx.createOscillator();
-                const gain1 = this.ctx.createGain();
-                osc1.type = 'square';
-                osc1.frequency.setValueAtTime(500, now);
-                osc1.frequency.linearRampToValueAtTime(900, now + 0.1);
-                gain1.gain.setValueAtTime(0.15, now);
-                gain1.gain.linearRampToValueAtTime(0.01, now + 0.15);
-                osc1.connect(gain1);
-                gain1.connect(this.ctx.destination);
-                osc1.start();
-                osc1.stop(now + 0.15);
 
-                // 彈簧啵嚶
-                const osc2 = this.ctx.createOscillator();
-                const gain2 = this.ctx.createGain();
-                osc2.type = 'triangle';
-                osc2.frequency.setValueAtTime(150, now);
-                osc2.exponentialRampToValueAtTime(600, now + 0.2);
-                gain2.gain.setValueAtTime(0.3, now);
-                gain2.gain.linearRampToValueAtTime(0.01, now + 0.25);
-                osc2.connect(gain2);
-                gain2.connect(this.ctx.destination);
-                osc2.start();
-                osc2.stop(now + 0.25);
-            }
-            playOverheat() {
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
-                
-                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
-                
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.12);
-            }
-            playLevelUp() {
-                if (!this.ctx) return;
-                const now = this.ctx.currentTime;
-                const notes = [261.6, 329.6, 392.0, 523.3, 784.0];
-                notes.forEach((freq, idx) => {
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    
-                    osc.type = 'sawtooth';
-                    osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-                    
-                    gain.gain.setValueAtTime(0.15, now + idx * 0.08);
-                    gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.2);
-                    
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    
-                    osc.start(now + idx * 0.08);
-                    osc.stop(now + idx * 0.08 + 0.2);
-                });
-            }
-        }
-        const sfx = new FunnySoundEngine();
+            const constraints = {
+                video: {
+                    facingMode: facingMode,
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            };
 
-        // 啟動後置相機鏡頭
-        async function initCamera() {
             try {
-                const constraints = {
-                    audio: false,
-                    video: {
-                        facingMode: "environment", // 優先請求後置鏡頭
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                };
                 const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoFeed.srcObject = stream;
-                state.detectorMode = 'motion';
-                controlInfo.innerHTML = "<span class='text-emerald-400'><i class='fa-solid fa-radar mr-1'></i> 動態生物掃描啟動！</span><br>鎖定鏡頭前晃動的人。按下 [FIRE] 開火！";
+                gameState.cameraStream = stream;
+                video.srcObject = stream;
+                gameState.currentFacingMode = facingMode;
+
+                // Adjust mirror styling depending on front camera
+                if (facingMode === 'user') {
+                    video.style.transform = 'scaleX(-1)';
+                } else {
+                    video.style.transform = 'none';
+                }
+                return true;
             } catch (err) {
-                console.warn("無法取得後置相機，嘗試通用預設視訊來源...", err);
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-                    videoFeed.srcObject = stream;
-                    state.detectorMode = 'motion';
-                    controlInfo.innerHTML = "<span class='text-cyan-400'><i class='fa-solid fa-radar mr-1'></i> 動態掃描已啟動！</span><br>鎖定鏡頭前的人。按下 [FIRE] 開火！";
-                } catch (innerErr) {
-                    console.error("相機加載失敗：", innerErr);
-                    // 相機徹底失效，降級至模擬器模式
-                    state.detectorMode = 'simulation';
-                    controlInfo.innerHTML = "<span class='text-yellow-400'><i class='fa-solid fa-triangle-exclamation'></i> 偵測到相機遭封鎖</span><br>已為您自動載入「數位雷達模擬器」！鎖定框將在螢幕上自動飄移。";
+                console.warn("webcam rejected or missing, utilizing simulated holo-space:", err);
+                return false;
+            }
+        }
+
+        // --- FACE TRACKING SETUP ---
+        function initFaceTracker() {
+            if (gameState.trackingTask) {
+                gameState.trackingTask.stop();
+            }
+
+            const tracker = new tracking.ObjectTracker('face');
+            tracker.setInitialScale(4);
+            tracker.setStepSize(2);
+            tracker.setEdgesDensity(0.1);
+
+            // Bind to video tracking
+            gameState.trackingTask = tracking.track('#video-feed', tracker);
+            
+            tracker.on('track', function(event) {
+                if (!gameState.faceTrackingEnabled) {
+                    gameState.faces = [];
+                    return;
                 }
-            }
+                // Save coordinates
+                gameState.faces = event.data;
+            });
         }
+    </script>
 
-        // 高性能動態影格像素追蹤 (Motion Detector)
-        // 透過比對連續兩幀影像的亮度與色差，找出畫面中「大概是人」的移動重心
-        let prevFrameData = null;
-        let changeDiagnoseTimer = 0;
-        let mockTargetTime = 0;
-
-        function scanForHumanTarget(deltaTime) {
-            // 如果相機權限遭拒或尚未準備妥當，切換為模擬雷達軌跡
-            if (state.detectorMode === 'simulation' || videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
-                mockHumanTarget(deltaTime);
-                return;
-            }
-
-            detectorTypeText.innerHTML = "<i class='fa-solid fa-radar text-cyan-400 mr-1'></i> LOCK-ON: BIOMETRIC RADAR";
-
-            // 1. 將影格縮放繪製到隱藏 Canvas，大幅降低運算開銷
-            hiddenCtx.drawImage(videoFeed, 0, 0, hiddenCv.width, hiddenCv.height);
-            const currentFrame = hiddenCtx.getImageData(0, 0, hiddenCv.width, hiddenCv.height);
-            const data = currentFrame.data;
-
-            if (!prevFrameData) {
-                prevFrameData = data;
-                return;
-            }
-
-            let sumX = 0;
-            let sumY = 0;
-            let count = 0;
-            let minX = hiddenCv.width;
-            let maxX = 0;
-            let minY = hiddenCv.height;
-            let maxY = 0;
-
-            // 2. 像素點比對，抓取變化最劇烈的區塊（代表人的頭部或肢體在晃動）
-            for (let i = 0; i < data.length; i += 4) {
-                const rDiff = Math.abs(data[i] - prevFrameData[i]);
-                const gDiff = Math.abs(data[i+1] - prevFrameData[i+1]);
-                const bDiff = Math.abs(data[i+2] - prevFrameData[i+2]);
-                
-                // 動態閾值判斷：過濾微小噪點
-                if (rDiff + gDiff + bDiff > 95) {
-                    const pixelIdx = i / 4;
-                    const x = pixelIdx % hiddenCv.width;
-                    const y = Math.floor(pixelIdx / hiddenCv.width);
-
-                    sumX += x;
-                    sumY += y;
-                    count++;
-
-                    if (x < minX) minX = x;
-                    if (x > maxX) maxX = x;
-                    if (y < minY) minY = y;
-                    if (y > maxY) maxY = y;
-                }
-            }
-
-            // 保存目前影格以備下次比對
-            prevFrameData = data;
-
-            // 3. 如果偵測到足夠的動態生物跡象
-            if (count > 60) { 
-                const scaleX = gameCanvas.width / hiddenCv.width;
-                const scaleY = gameCanvas.height / hiddenCv.height;
-
-                // 鎖定一個 150x150 像素的大小，這完美包覆頭部/人臉，且框框大小更穩定
-                const targetW = 150;
-                const targetH = 150;
-
-                // 取得動態區域的重心坐標，並稍微往上調 30%（這通常是人臉/頭部的位置）
-                const targetX = minX * scaleX + (maxX - minX) * scaleX / 2;
-                const targetY = minY * scaleY + (maxY - minY) * scaleY * 0.3;
-
-                // 絲滑 Lerp 追蹤：讓定框慢速滑向目標，不會有任何生硬抖動，科技感十足！
-                state.target.x = state.target.x + (targetX - state.target.x) * 0.08;
-                state.target.y = state.target.y + (targetY - state.target.y) * 0.08;
-                state.target.width = state.target.width + (targetW - state.target.width) * 0.1;
-                state.target.height = state.target.height + (targetH - state.target.height) * 0.1;
-                
-                // 增加鎖定強度
-                state.target.lockStrength = Math.min(100, state.target.lockStrength + 20);
-                state.target.locked = state.target.lockStrength > 25;
-                
-                lockIndicator.classList.remove('opacity-0');
-            } else {
-                // 如果朋友裝死不動，鎖定框也只會以極慢的速度淡出，維持 3~4 秒的「滯留鎖定」，好射好玩！
-                fadeOutLock();
-            }
-
-            // 定期更換隨機幽默診斷內容
-            changeDiagnoseTimer += deltaTime;
-            if (changeDiagnoseTimer > 3.0 || state.target.funnyLabel === "") {
-                const randomDiag = funnyDiagnoses[Math.floor(Math.random() * funnyDiagnoses.length)];
-                state.target.funnyLabel = randomDiag.label;
-                state.target.funnyValue = randomDiag.val;
-                changeDiagnoseTimer = 0;
-            }
-        }
-
-        // 鎖定滯留淡出
-        function fadeOutLock() {
-            state.target.lockStrength = Math.max(0, state.target.lockStrength - 0.6);
-            if (state.target.lockStrength === 0) {
-                state.target.locked = false;
-                lockIndicator.classList.add('opacity-0');
-            }
-        }
-
-        // 模擬備用鎖定軌跡 (無相機/開發測試用)
-        function mockHumanTarget(deltaTime = 0.016) {
-            detectorTypeText.innerHTML = "<i class='fa-solid fa-gamepad text-yellow-400 mr-1'></i> LOCK-ON: RADAR SIMULATION";
-            mockTargetTime += deltaTime * 1.5;
-            
-            // 使用正弦與餘弦波生成滑順的無限符號(8字形)漂移路徑，大幅提昇遊玩樂趣
-            const cx = gameCanvas.width / 2 + Math.sin(mockTargetTime) * (gameCanvas.width * 0.25);
-            const cy = gameCanvas.height / 2 + Math.cos(mockTargetTime * 0.7) * (gameCanvas.height * 0.18);
-            
-            state.target.x = state.target.x + (cx - state.target.x) * 0.08;
-            state.target.y = state.target.y + (cy - state.target.y) * 0.08;
-            state.target.width = state.target.width + (140 - state.target.width) * 0.1;
-            state.target.height = state.target.height + (140 - state.target.height) * 0.1;
-            state.target.locked = true;
-            state.target.lockStrength = 80;
-            
-            lockIndicator.classList.remove('opacity-0');
-
-            changeDiagnoseTimer += deltaTime;
-            if (changeDiagnoseTimer > 3.0 || state.target.funnyLabel === "") {
-                const randomDiag = funnyDiagnoses[Math.floor(Math.random() * funnyDiagnoses.length)];
-                state.target.funnyLabel = randomDiag.label;
-                state.target.funnyValue = randomDiag.val;
-                changeDiagnoseTimer = 0;
-            }
-        }
-
-        // 繪製虛擬雷達網格背景
-        function drawVirtualBackground(ctx) {
-            ctx.fillStyle = "#07070c";
-            ctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
-            
-            ctx.strokeStyle = "rgba(34, 211, 238, 0.04)";
-            ctx.lineWidth = 1;
-            const gridSize = 45;
-            
-            for (let x = 0; x < gameCanvas.width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, gameCanvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < gameCanvas.height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(gameCanvas.width, y);
-                ctx.stroke();
-            }
-            
-            const time = Date.now() * 0.001;
-            const sweepY = (time * 180) % gameCanvas.height;
-            ctx.strokeStyle = "rgba(34, 211, 238, 0.12)";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, sweepY);
-            ctx.lineTo(gameCanvas.width, sweepY);
-            ctx.stroke();
-            
-            ctx.save();
-            const cx = gameCanvas.width / 2;
-            const cy = gameCanvas.height / 2;
-            ctx.translate(cx, cy);
-            ctx.rotate(time * 0.4);
-            ctx.strokeStyle = "rgba(236, 72, 153, 0.05)";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(0, 0, 160, 0, Math.PI / 2);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(0, 0, 160, Math.PI, Math.PI * 1.5);
-            ctx.stroke();
-            ctx.restore();
-            
-            ctx.fillStyle = "rgba(148, 163, 184, 0.35)";
-            ctx.font = '11px Orbitron, sans-serif';
-            ctx.textBaseline = 'middle';
-            ctx.textAlign = 'center';
-            ctx.fillText("SIMULATION RADAR MODE (WEBCAM OFFLINE)", gameCanvas.width / 2, gameCanvas.height - 35);
-        }
-
-        // 搞怪表情包爆散粒子
-        class EmojiParticle {
-            constructor(x, y) {
+    <script>
+        // --- PARTICLE PHYSICS SYSTEM ---
+        class Particle {
+            constructor(x, y, color, vx, vy, size, type = 'physics') {
                 this.x = x;
                 this.y = y;
-                this.emoji = funnyEmojis[Math.floor(Math.random() * funnyEmojis.length)];
-                
-                const angle = Math.random() * Math.PI * 2;
-                const speed = 3 + Math.random() * 8;
-                this.vx = Math.cos(angle) * speed;
-                this.vy = Math.sin(angle) * speed;
-                
-                this.size = 18 + Math.random() * 24;
+                this.color = color;
+                this.vx = vx;
+                this.vy = vy;
+                this.size = size;
                 this.alpha = 1;
-                this.decay = 0.015 + Math.random() * 0.02;
-                this.gravity = 0.15;
+                this.type = type; // 'physics', 'confetti', 'heart', 'water'
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotSpeed = (Math.random() - 0.5) * 0.2;
             }
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.vy += this.gravity;
-                this.alpha -= this.decay;
+
+            update(dt) {
+                this.x += this.vx * dt * 60;
+                this.y += this.vy * dt * 60;
+                
+                if (this.type === 'confetti') {
+                    this.vy += 0.2; // Gravity
+                    this.alpha -= 0.015;
+                } else if (this.type === 'water') {
+                    this.vy += 0.3; // High Gravity
+                    this.size += 0.1; // Splat expansion
+                    this.alpha -= 0.02;
+                } else if (this.type === 'heart') {
+                    this.vy -= 0.1; // Floats upwards
+                    this.alpha -= 0.012;
+                } else {
+                    this.alpha -= 0.025; // Laser sparks
+                }
+                
+                this.rotation += this.rotSpeed;
+                return this.alpha > 0;
             }
-            draw(ctx) {
+
+            draw() {
                 ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                ctx.font = `${this.size}px sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(this.emoji, this.x, this.y);
+                ctx.globalAlpha = this.alpha;
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+
+                if (this.type === 'heart') {
+                    // Draw mini vector heart
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.moveTo(0, this.size / 4);
+                    ctx.bezierCurveTo(this.size / 2, -this.size / 2, this.size * 1.2, this.size / 3, 0, this.size);
+                    ctx.bezierCurveTo(-this.size * 1.2, this.size / 3, -this.size / 2, -this.size / 2, 0, this.size / 4);
+                    ctx.fill();
+                } else if (this.type === 'confetti') {
+                    // Multi shape colorful squares
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
+                } else if (this.type === 'water') {
+                    // Soft blue splash bubbles
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.7)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Spark glow circle
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = this.color;
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
                 ctx.restore();
             }
         }
 
-        // 動態浮空整人字體
-        class PrankText {
-            constructor(x, y, text, isCrit = false) {
+        // --- SPLAT OVERLAYS (Water drips / Screen Splats) ---
+        class ScreenSplat {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.alpha = 1.0;
+                this.size = 50 + Math.random() * 60;
+                this.dripY = 0;
+            }
+
+            update(dt) {
+                if (this.type === 'water') {
+                    this.dripY += 0.5; // Drips down screen
+                    this.alpha -= 0.003;
+                } else {
+                    this.alpha -= 0.01;
+                }
+                return this.alpha > 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                if (this.type === 'water') {
+                    // Realistic splash vector blob
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.45)';
+                    ctx.shadowBlur = 5;
+                    ctx.shadowColor = '#3b82f6';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y + this.dripY, this.size, 0, Math.PI*2);
+                    ctx.arc(this.x - this.size * 0.4, this.y + this.dripY + this.size * 0.3, this.size * 0.5, 0, Math.PI*2);
+                    ctx.arc(this.x + this.size * 0.5, this.y + this.dripY - this.size * 0.2, this.size * 0.4, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- VIRTUAL MEME TARGETS (Holographic simulator targets) ---
+        const memeEmojis = ['🤡', '👽', '👻', '💩', '🤪', '👹', '🦧', '🤖'];
+        class VirtualTarget {
+            constructor(w, h) {
+                this.x = Math.random() * (w - 100) + 50;
+                this.y = Math.random() * (h - 200) + 50;
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                this.emoji = memeEmojis[Math.floor(Math.random() * memeEmojis.length)];
+                this.size = 65;
+                this.hp = 100;
+                this.maxHp = 100;
+            }
+
+            update(w, h, dt) {
+                this.x += this.vx * dt * 60;
+                this.y += this.vy * dt * 60;
+
+                // Bounce boundaries
+                if (this.x < 30 || this.x > w - 30) this.vx *= -1;
+                if (this.y < 30 || this.y > h - 180) this.vy *= -1;
+            }
+
+            draw() {
+                // Drawing sci-fi scan bracket around virtual targets
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Pulsing outer bracket
+                const pulse = Math.sin(performance.now() * 0.01) * 5;
+                ctx.strokeStyle = '#ec4899';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(-this.size/2 - 10 - pulse, -this.size/2 - 10 - pulse, this.size + 20 + pulse * 2, this.size + 20 + pulse * 2);
+
+                // Small HP bar
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(-this.size/2, -this.size/2 - 25, this.size, 5);
+                ctx.fillStyle = '#ec4899';
+                ctx.fillRect(-this.size/2, -this.size/2 - 25, this.size * (this.hp / this.maxHp), 5);
+
+                // Emoji rendering
+                ctx.font = `${this.size}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, 0, 0);
+                ctx.restore();
+            }
+        }
+
+        // --- COMIC FLOATING TEXT WORDS (POW! BAM! Insults) ---
+        class ComicCallout {
+            constructor(x, y, text, color) {
                 this.x = x;
                 this.y = y;
                 this.text = text;
-                this.isCrit = isCrit;
-                this.vy = -2 - Math.random() * 2;
-                this.vx = (Math.random() - 0.5) * 2;
+                this.color = color;
+                this.scale = 0.5;
                 this.alpha = 1;
-                this.scale = isCrit ? 1.5 : 1.0;
+                this.vy = -3;
+                this.vx = (Math.random() - 0.5) * 4;
             }
-            update(deltaTime) {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.alpha -= deltaTime * 1.2;
-            }
-            draw(ctx) {
-                ctx.save();
-                ctx.globalAlpha = Math.max(0, this.alpha);
-                
-                if (this.isCrit) {
-                    ctx.font = '900 24px Orbitron, "Microsoft JhengHei"';
-                    ctx.fillStyle = '#f43f5e';
-                    ctx.shadowColor = '#000000';
-                    ctx.shadowBlur = 6;
-                } else {
-                    ctx.font = 'bold 18px "Rajdhani", "Microsoft JhengHei"';
-                    ctx.fillStyle = '#22d3ee';
-                    ctx.shadowColor = '#000000';
-                    ctx.shadowBlur = 4;
-                }
-                
-                ctx.textAlign = 'center';
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 4;
-                ctx.strokeText(this.text, this.x, this.y);
-                ctx.fillText(this.text, this.x, this.y);
-                ctx.restore();
-            }
-        }
 
-        // 雷射開槍光束射擊效果
-        class LaserBeam {
-            constructor(startX, startY, endX, endY) {
-                this.startX = startX;
-                this.startY = startY;
-                this.endX = endX;
-                this.endY = endY;
-                this.alpha = 1.0;
+            update(dt) {
+                this.x += this.vx * dt * 60;
+                this.y += this.vy * dt * 60;
+                this.scale += 0.08;
+                this.alpha -= 0.02;
+                return this.alpha > 0;
             }
-            update(deltaTime) {
-                this.alpha -= deltaTime * 6.0;
-            }
-            draw(ctx) {
-                if (this.alpha <= 0) return;
+
+            draw() {
                 ctx.save();
                 ctx.globalAlpha = this.alpha;
-                ctx.strokeStyle = '#f43f5e';
-                ctx.shadowColor = '#f43f5e';
-                ctx.shadowBlur = 15;
+                ctx.translate(this.x, this.y);
+                ctx.scale(Math.min(this.scale, 1.5), Math.min(this.scale, 1.5));
                 
-                ctx.lineWidth = 8;
-                ctx.beginPath();
-                ctx.moveTo(this.startX, this.startY);
-                ctx.lineTo(this.endX, this.endY);
-                ctx.stroke();
-
-                ctx.strokeStyle = '#ffffff';
+                // Draw cool angled comic balloon background
+                ctx.fillStyle = '#eab308'; // Yellow badge
+                ctx.strokeStyle = '#000000';
                 ctx.lineWidth = 3;
+                
+                ctx.font = '900 24px "Orbitron", "Inter", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const metrics = ctx.measureText(this.text);
+                const rectW = metrics.width + 24;
+                const rectH = 38;
+
                 ctx.beginPath();
-                ctx.moveTo(this.startX, this.startY);
-                ctx.lineTo(this.endX, this.endY);
+                ctx.roundRect(-rectW/2, -rectH/2, rectW, rectH, 10);
+                ctx.fill();
                 ctx.stroke();
 
+                // Text
+                ctx.fillStyle = '#000000';
+                ctx.fillText(this.text, 0, 0);
                 ctx.restore();
             }
         }
+    </script>
 
-        function fireWeapon() {
-            if (!state.gameActive || state.overheated) {
-                if (state.overheated) {
-                    sfx.playOverheat();
-                    triggerFlash('#f43f5e', 0.15);
+    <script>
+        // --- DRAWING REAL-TIME AR HUD OVERLAYS ---
+        function coordinateMapping(rx, ry, rw, rh) {
+            // Converts raw 640x480 tracking.js dimensions to fit full container aspect ratio (cover mode)
+            const videoW = 320; // Default tracker binding width
+            const videoH = 240; // Default tracker binding height
+            const canvasW = canvas.width;
+            const canvasH = canvas.height;
+
+            const videoRatio = videoW / videoH;
+            const canvasRatio = canvasW / canvasH;
+
+            let scale, xOffset = 0, yOffset = 0;
+
+            if (canvasRatio > videoRatio) {
+                scale = canvasW / videoW;
+                yOffset = (canvasH - videoH * scale) / 2;
+            } else {
+                scale = canvasH / videoH;
+                xOffset = (canvasW - videoW * scale) / 2;
+            }
+
+            // Mirror horizontally if using user (selfie) camera
+            let finalX = rx * scale + xOffset;
+            if (gameState.currentFacingMode === 'user') {
+                finalX = canvasW - (finalX + rw * scale);
+            }
+
+            return {
+                x: finalX,
+                y: ry * scale + yOffset,
+                w: rw * scale,
+                h: rh * scale
+            };
+        }
+
+        function drawFaceDecorations(mapped, faceIdx) {
+            const wpn = gameState.currentWeapon;
+            const px = mapped.x + mapped.w / 2;
+            const py = mapped.y + mapped.h / 2;
+            
+            ctx.save();
+            
+            // Neon lock bracket around real faces
+            ctx.strokeStyle = weaponSpecs[wpn].color;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = weaponSpecs[wpn].color;
+            
+            // Draw stylized futuristic frame
+            ctx.beginPath();
+            const cornerSize = Math.min(mapped.w, mapped.h) * 0.25;
+            // Top Left
+            ctx.moveTo(mapped.x, mapped.y + cornerSize);
+            ctx.lineTo(mapped.x, mapped.y);
+            ctx.lineTo(mapped.x + cornerSize, mapped.y);
+            // Top Right
+            ctx.moveTo(mapped.x + mapped.w - cornerSize, mapped.y);
+            ctx.lineTo(mapped.x + mapped.w, mapped.y);
+            ctx.lineTo(mapped.x + mapped.w, mapped.y + cornerSize);
+            // Bottom Left
+            ctx.moveTo(mapped.x, mapped.y + mapped.h - cornerSize);
+            ctx.lineTo(mapped.x, mapped.y + mapped.h);
+            ctx.lineTo(mapped.x + cornerSize, mapped.y + mapped.h);
+            // Bottom Right
+            ctx.moveTo(mapped.x + mapped.w - cornerSize, mapped.y + mapped.h);
+            ctx.lineTo(mapped.x + mapped.w, mapped.y + mapped.h);
+            ctx.lineTo(mapped.x + mapped.w, mapped.y + mapped.h - cornerSize);
+            ctx.stroke();
+
+            // Label
+            ctx.font = '900 10px "Orbitron", sans-serif';
+            ctx.fillStyle = weaponSpecs[wpn].color;
+            ctx.fillText(`VICTIM_LOCK_${faceIdx + 1}`, mapped.x, mapped.y - 10);
+
+            // TROLL OVERLAYS based on weapon selected
+            ctx.shadowBlur = 0; // Reset shadow for cleaner rendering
+            if (wpn === 'laser') {
+                // Glow Laser Glasses
+                ctx.font = `${mapped.w * 0.65}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('😎', px, py - mapped.h * 0.05);
+                
+                // Draw custom neon beams
+                ctx.strokeStyle = '#f43f5e';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(px - mapped.w * 0.15, py - mapped.h * 0.05);
+                ctx.lineTo(px - mapped.w * 0.4, py + mapped.h * 0.3);
+                ctx.moveTo(px + mapped.w * 0.15, py - mapped.h * 0.05);
+                ctx.lineTo(px + mapped.w * 0.4, py + mapped.h * 0.3);
+                ctx.stroke();
+
+            } else if (wpn === 'confetti') {
+                // Clown Wig and Red Nose overlay
+                ctx.font = `${mapped.w * 1.1}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🤡', px, py - mapped.h * 0.02);
+
+            } else if (wpn === 'water') {
+                // Scuba Goggles
+                ctx.font = `${mapped.w * 0.9}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🤿', px, py - mapped.h * 0.08);
+
+            } else if (wpn === 'love') {
+                // Blushing anime hearts cheeks
+                ctx.font = `${mapped.w * 0.5}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                // Cheek left
+                ctx.fillText('💖', px - mapped.w * 0.25, py + mapped.h * 0.08);
+                // Cheek right
+                ctx.fillText('💖', px + mapped.w * 0.25, py + mapped.h * 0.08);
+                // Floating crown of hearts
+                ctx.font = `${mapped.w * 0.6}px Arial`;
+                ctx.fillText('🥰', px, py - mapped.h * 0.55);
+            }
+            
+            ctx.restore();
+        }
+    </script>
+
+    <script>
+        // --- CORE GAME LOOP ---
+        function runMainLoop(timestamp) {
+            const dt = Math.min((timestamp - gameState.lastFrameTime) / 1000, 0.1);
+            gameState.lastFrameTime = timestamp;
+
+            // Handle canvas sizing dynamically
+            if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Process Virtual Targets (Bounce & Render)
+            if (gameState.simTargetsEnabled) {
+                // Spawn one if empty
+                if (gameState.virtualTargets.length < 2) {
+                    gameState.virtualTargets.push(new VirtualTarget(canvas.width, canvas.height));
                 }
+                gameState.virtualTargets.forEach(target => {
+                    target.update(canvas.width, canvas.height, dt);
+                    target.draw();
+                });
+            }
+
+            // 2. Draw Real-Life Face Overlays
+            let centerMatched = false;
+            let currentTargetName = "SCANNING";
+            const crossX = canvas.width / 2;
+            const crossY = canvas.height / 2;
+
+            if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
+                gameState.faces.forEach((face, idx) => {
+                    const mapped = coordinateMapping(face.x, face.y, face.width, face.height);
+                    drawFaceDecorations(mapped, idx);
+
+                    // Check lock-on condition (is face centered)
+                    if (crossX >= mapped.x && crossX <= mapped.x + mapped.w &&
+                        crossY >= mapped.y && crossY <= mapped.y + mapped.h) {
+                        centerMatched = true;
+                        currentTargetName = `VICTIM_${idx + 1}`;
+                    }
+                });
+            }
+
+            // 3. Draw Laser projectile lines during fire
+            if (gameState.muzzleFlashActive) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.strokeStyle = weaponSpecs[gameState.currentWeapon].color;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = weaponSpecs[gameState.currentWeapon].color;
+                
+                if (gameState.currentWeapon === 'laser') {
+                    ctx.lineWidth = 10;
+                    ctx.moveTo(canvas.width * 0.85, canvas.height * 0.9);
+                    ctx.lineTo(crossX, crossY);
+                } else if (gameState.currentWeapon === 'love') {
+                    ctx.lineWidth = 4;
+                    ctx.moveTo(canvas.width * 0.85, canvas.height * 0.9);
+                    ctx.lineTo(crossX, crossY);
+                }
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 4. Update and Draw Particles
+            gameState.particles = gameState.particles.filter(p => {
+                const alive = p.update(dt);
+                if (alive) p.draw();
+                return alive;
+            });
+
+            // 5. Update and Draw Splats
+            gameState.splats = gameState.splats.filter(s => {
+                const alive = s.update(dt);
+                if (alive) s.draw();
+                return alive;
+            });
+
+            // 6. Update and Draw Comic Text Callouts
+            gameState.splats = gameState.splats.concat(
+                gameState.splats.filter(s => s instanceof ComicCallout)
+            );
+            
+            // We can draw ComicCallouts separately to make sure they are on top
+            gameState.particles.forEach(p => {
+                if (p instanceof ComicCallout) {
+                    p.update(dt);
+                    p.draw();
+                }
+            });
+
+            // 7. Update HUD Crosshair indicators
+            const ring = document.getElementById('target-lock-ring');
+            const distTxt = document.getElementById('target-dist');
+            if (centerMatched) {
+                ring.style.transform = 'scale(1.2)';
+                ring.style.borderColor = '#f43f5e'; // Warning red
+                distTxt.innerText = "LOCKED_MAX";
+                distTxt.classList.add('text-rose-500');
+            } else {
+                ring.style.transform = 'scale(0.85)';
+                ring.style.borderColor = weaponSpecs[gameState.currentWeapon].color;
+                distTxt.innerText = "STANDBY";
+                distTxt.classList.remove('text-rose-500');
+            }
+
+            // Settle muzzle flash opacity
+            if (gameState.muzzleFlashActive) {
+                const flash = document.getElementById('muzzle-flash');
+                flash.style.opacity = '1';
+                flash.style.transform = 'scale(1.5) rotate(' + (Math.random()*360) + 'deg)';
+                setTimeout(() => {
+                    flash.style.opacity = '0';
+                    gameState.muzzleFlashActive = false;
+                }, 50);
+            }
+
+            // Decay weapon recoil displacement
+            gameState.weaponSwayX *= 0.88;
+            gameState.weaponSwayY *= 0.88;
+            document.getElementById('weapon-holder').style.transform = `translate(${gameState.weaponSwayX + 16}px, ${gameState.weaponSwayY + 32}px)`;
+
+            requestAnimationFrame(runMainLoop);
+        }
+
+        // --- SHOOT/FIRE INTERACTION MECHANIC ---
+        function fireWeapon() {
+            if (gameState.isReloading) return;
+            
+            if (gameState.ammo <= 0) {
+                triggerReload();
                 return;
             }
 
-            state.heat += 18;
-            sfx.playShoot();
+            // Subtract Ammo
+            gameState.ammo--;
+            updateAmmoHUD();
 
-            triggerFlash('#ffffff', 0.2);
-            triggerScreenShake();
+            // Set Recoil & flash active
+            gameState.weaponSwayY = 55; // Sudden recoil kick up
+            gameState.weaponSwayX = (Math.random() - 0.5) * 30; // Side shake
+            gameState.muzzleFlashActive = true;
 
-            const screenW = gameCanvas.width;
-            const screenH = gameCanvas.height;
-            const screenCX = screenW / 2;
-            const screenCY = screenH / 2;
+            // Trigger firing sound
+            if (gameState.soundFX) {
+                if (gameState.currentWeapon === 'laser') SoundFX.playLaser();
+                if (gameState.currentWeapon === 'confetti') SoundFX.playConfetti();
+                if (gameState.currentWeapon === 'water') SoundFX.playWater();
+                if (gameState.currentWeapon === 'love') SoundFX.playLove();
+            }
 
-            let isHit = false;
-            const t = state.target;
-            const halfW = t.width / 2;
-            const halfH = t.height / 2;
+            // Set Screen Shake visual cue
+            const container = document.getElementById('game-container');
+            container.classList.add('shake-active');
+            setTimeout(() => container.classList.remove('shake-active'), 200);
 
-            if (state.target.locked) {
-                // 超寬容鎖定：給予 60 像素額外容錯，好射好玩！
-                const tolerance = 60;
-                if (screenCX >= t.x - halfW - tolerance && screenCX <= t.x + halfW + tolerance &&
-                    screenCY >= t.y - halfH - tolerance && screenCY <= t.y + halfH + tolerance) {
-                    isHit = true;
+            // Check Hit target inside center of screen crosshair
+            const crossX = canvas.width / 2;
+            const crossY = canvas.height / 2;
+            let targetHit = false;
+
+            // Check A: Real Camera Face targets
+            if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
+                for (let i = 0; i < gameState.faces.length; i++) {
+                    const face = gameState.faces[i];
+                    const mapped = coordinateMapping(face.x, face.y, face.width, face.height);
+                    
+                    if (crossX >= mapped.x && crossX <= mapped.x + mapped.w &&
+                        crossY >= mapped.y && crossY <= mapped.y + mapped.h) {
+                        
+                        targetHit = true;
+                        handleTargetScore(mapped.x + mapped.w / 2, mapped.y + mapped.h / 2, `VICTIM_${i+1}`);
+                        break;
+                    }
                 }
             }
 
-            const laser = new LaserBeam(screenW * 0.8, screenH, isHit ? t.x : screenCX, isHit ? t.y : screenCY);
-            state.lasers.push(laser);
-
-            if (isHit) {
-                processPrankHit(t.x, t.y);
-            } else {
-                resetCombo();
+            // Check B: Virtual targets bouncing
+            if (!targetHit && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
+                for (let i = gameState.virtualTargets.length - 1; i >= 0; i--) {
+                    const target = gameState.virtualTargets[i];
+                    const dist = Math.hypot(crossX - target.x, crossY - target.y);
+                    if (dist < target.size) {
+                        targetHit = true;
+                        target.hp -= 34; // 3 shots to kill
+                        
+                        if (target.hp <= 0) {
+                            // Destroy target fully
+                            handleTargetScore(target.x, target.y, `HOLOTROLL_${target.emoji}`);
+                            gameState.virtualTargets.splice(i, 1);
+                        } else {
+                            // Show minor impact score / sparks
+                            handleTargetScore(target.x, target.y, "HIT!", false);
+                        }
+                        break;
+                    }
+                }
             }
 
-            if (state.heat >= 100) {
-                state.heat = 100;
-                state.overheated = true;
-                overheatAlert.classList.remove('hidden');
-                if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-            }
-            updateWeaponHUD();
+            // Spawn muzzle exhaust particles
+            spawnMuzzleParticles();
         }
 
-        // 惡搞擊中反應
-        function processPrankHit(hitX, hitY) {
-            state.combo++;
-            updateComboHUD();
+        // --- SCORE & TROLL HIT HANDLER ---
+        function handleTargetScore(tx, ty, victimName, isFatal = true) {
+            // Trigger Hit impacts
+            if (gameState.soundFX) SoundFX.playHit();
 
-            const slang = hitSlangs[Math.floor(Math.random() * hitSlangs.length)];
-            const multiplier = 1 + Math.floor(state.combo / 4) * 0.2;
-            const scoreGained = Math.floor(slang.score * multiplier);
+            // Spawn weapon specific explosion particles
+            const count = weaponSpecs[gameState.currentWeapon].particleCount;
+            const col = weaponSpecs[gameState.currentWeapon].color;
+            const type = gameState.currentWeapon;
 
-            state.score += scoreGained;
-            scoreDisplay.innerText = state.score.toLocaleString();
-            gainXP(slang.crit ? 35 : 20);
-
-            sfx.playExplosion();
-            triggerFlash('#a855f7', 0.25);
-            if (navigator.vibrate) navigator.vibrate(slang.crit ? 200 : 80);
-
-            for (let i = 0; i < (slang.crit ? 25 : 12); i++) {
-                state.particles.push(new EmojiParticle(hitX, hitY));
-            }
-
-            state.floatingTexts.push(new PrankText(hitX, hitY - 40, `${slang.text}`, slang.crit));
-            state.floatingTexts.push(new PrankText(hitX, hitY - 10, `+${scoreGained} PTS`, false));
-        }
-
-        // XP 與等級進度
-        function gainXP(amount) {
-            state.xp += amount;
-            if (state.xp >= state.xpNeeded) {
-                state.xp -= state.xpNeeded;
-                state.level++;
-                state.xpNeeded = Math.floor(state.xpNeeded * 1.35);
-                
-                sfx.playLevelUp();
-                levelDisplay.innerText = state.level.toString().padStart(2, '0');
-                
-                const titleIdx = Math.min(levelTitles.length - 1, Math.floor((state.level - 1) / 2));
-                titleDisplay.innerText = levelTitles[titleIdx];
-
-                triggerFlash('#22d3ee', 0.4);
-                state.floatingTexts.push(new PrankText(
-                    gameCanvas.width / 2, 
-                    gameCanvas.height / 3, 
-                    "LEVEL UP! 整人天賦爆發", 
-                    true
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 2 + Math.random() * 8;
+                gameState.particles.push(new Particle(
+                    tx, ty, col,
+                    Math.cos(angle) * speed, Math.sin(angle) * speed,
+                    4 + Math.random() * 8, type
                 ));
             }
-            
-            const xpPct = (state.xp / state.xpNeeded) * 100;
-            xpBar.style.width = `${xpPct}%`;
-        }
 
-        // 輔助畫面閃光
-        function triggerFlash(color, opacity) {
-            flashEffect.style.backgroundColor = color;
-            flashEffect.style.opacity = opacity;
-            setTimeout(() => {
-                flashEffect.style.opacity = '0';
-            }, 100);
-        }
+            if (!isFatal) return; // Exit early if just structural hit
 
-        // 輔助畫面抖動
-        function triggerScreenShake() {
-            document.body.classList.add('shake-active');
-            setTimeout(() => {
-                document.body.classList.remove('shake-active');
-            }, 200);
-        }
+            // Splash Water on Screen
+            if (gameState.currentWeapon === 'water') {
+                gameState.splats.push(new ScreenSplat(
+                    Math.random() * canvas.width, Math.random() * canvas.height, 'water'
+                ));
+            }
 
-        // 更新武器過熱 UI
-        function updateWeaponHUD() {
-            heatBar.style.width = `${state.heat}%`;
-            heatPercent.innerText = `${Math.floor(state.heat)}%`;
-            
-            if (state.heat > 75) {
-                heatBar.className = "h-full bg-gradient-to-r from-red-500 to-pink-600 rounded-full transition-all duration-100";
-            } else if (state.heat > 40) {
-                heatBar.className = "h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full transition-all duration-100";
+            // Update scores
+            const pointsGained = 150 + Math.floor(Math.random() * 100);
+            gameState.score += pointsGained;
+            document.getElementById('score-display').innerText = String(gameState.score).padStart(6, '0');
+            document.getElementById('board-you-score').innerText = `${gameState.score}分`;
+
+            // Custom user text popup
+            const customInsultText = document.getElementById('custom-insult-input').value || "大笨蛋!!";
+            gameState.particles.push(new ComicCallout(tx, ty - 40, customInsultText, '#eab308'));
+
+            // Voice roast
+            triggerVoiceRoast('hit');
+
+            // Handle Rank Level progress
+            gameState.xp += pointsGained;
+            if (gameState.xp >= gameState.xpNeeded) {
+                triggerLevelUp();
             } else {
-                heatBar.className = "h-full bg-gradient-to-r from-cyan-400 to-pink-500 rounded-full transition-all duration-100";
+                updateProgressHUD();
             }
         }
 
-        // 連擊相關控制
-        function updateComboHUD() {
-            if (state.comboTimer) clearTimeout(state.comboTimer);
+        // --- LEVEL UP HANDLER ---
+        const levelBadges = [
+            "整人少將 (Troll Rookie)",
+            "中二狙擊手 (Prank Sniper)",
+            "真人收割者 (Human Disruptor)",
+            "戰術整人特工 (Tactical Jester)",
+            "究極惡搞大魔王 (Grandmaster Troll)"
+        ];
+
+        function triggerLevelUp() {
+            gameState.level++;
+            gameState.xp -= gameState.xpNeeded;
+            gameState.xpNeeded = Math.floor(gameState.xpNeeded * 1.5);
             
-            if (state.combo >= 2) {
-                comboDisplay.innerText = `${state.combo} COMBO`;
-                comboContainer.classList.remove('opacity-0', 'scale-75');
-                comboContainer.classList.add('opacity-100', 'scale-100');
+            // Audio cue
+            if (gameState.soundFX) SoundFX.playLevelUp();
+            triggerVoiceRoast('levelUp');
+
+            // Show screen layout splash popup
+            const splash = document.getElementById('level-up-splash');
+            const badge = document.getElementById('level-badge');
+            
+            badge.innerText = levelBadges[Math.min(gameState.level - 1, levelBadges.length - 1)];
+            document.getElementById('level-display').innerText = `LV.${String(gameState.level).padStart(2, '0')}`;
+            
+            splash.classList.remove('hidden');
+            setTimeout(() => {
+                splash.classList.remove('opacity-0');
+            }, 50);
+
+            updateProgressHUD();
+        }
+
+        function dismissLevelUp() {
+            const splash = document.getElementById('level-up-splash');
+            splash.classList.add('hidden');
+        }
+
+        // --- UTILITY AMMO & HUD UPDATE LOOPS ---
+        function updateAmmoHUD() {
+            document.getElementById('ammo-count').innerText = gameState.ammo;
+            const bars = document.querySelectorAll('.ammo-bar');
+            bars.forEach((bar, idx) => {
+                if (idx < gameState.ammo) {
+                    bar.style.opacity = '1';
+                } else {
+                    bar.style.opacity = '0.1';
+                }
+            });
+        }
+
+        function triggerReload() {
+            if (gameState.isReloading) return;
+            gameState.isReloading = true;
+            if (gameState.soundFX) SoundFX.playReload();
+
+            const text = document.getElementById('target-dist');
+            text.innerText = "RELOADING...";
+            text.classList.add('text-yellow-400');
+
+            const bat = document.getElementById('battery-level');
+            bat.style.width = '0%';
+
+            setTimeout(() => {
+                gameState.ammo = gameState.maxAmmo;
+                updateAmmoHUD();
+                gameState.isReloading = false;
+                text.innerText = "STANDBY";
+                text.classList.remove('text-yellow-400');
+                bat.style.width = '100%';
+            }, 1200);
+        }
+
+        function updateProgressHUD() {
+            const ratio = (gameState.xp / gameState.xpNeeded) * 100;
+            document.getElementById('xp-bar').style.width = `${ratio}%`;
+            document.getElementById('xp-text').innerText = `${gameState.xp} / ${gameState.xpNeeded}`;
+        }
+
+        function spawnMuzzleParticles() {
+            const crossX = canvas.width / 2;
+            const crossY = canvas.height / 2;
+            const gunX = canvas.width * 0.85;
+            const gunY = canvas.height * 0.9;
+            const col = weaponSpecs[gameState.currentWeapon].color;
+
+            // Spawn smoke/spark exhaust near gun nozzle
+            for (let i = 0; i < 8; i++) {
+                gameState.particles.push(new Particle(
+                    gunX - 50, gunY - 50, col,
+                    -1 - Math.random() * 3, -1 - Math.random() * 3,
+                    5 + Math.random() * 5, 'physics'
+                ));
             }
-
-            state.comboTimer = setTimeout(() => {
-                resetCombo();
-            }, 4000);
         }
 
-        function resetCombo() {
-            state.combo = 0;
-            comboContainer.classList.add('opacity-0', 'scale-75');
-            comboContainer.classList.remove('opacity-100', 'scale-100');
+        // --- WEAPON SELECTOR UTILITY ---
+        function selectWeapon(wpnId) {
+            gameState.currentWeapon = wpnId;
+            
+            // Adjust glowing stripe styling on Blaster SVG
+            const colors = {
+                laser: '#22d3ee',
+                confetti: '#ec4899',
+                water: '#3b82f6',
+                love: '#f43f5e'
+            };
+            document.getElementById('weapon-stripe').setAttribute('fill', colors[wpnId]);
+
+            // Update selector highlights
+            document.querySelectorAll('.wpn-btn').forEach(btn => {
+                btn.className = "wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-pink-400 transition-all duration-200";
+            });
+
+            const activeBtn = document.getElementById(`wpn-${wpnId}`);
+            activeBtn.className = `wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border-2 border-[${colors[wpnId]}] bg-[${colors[wpnId]}]/10 text-white font-bold transition-all duration-200`;
+            
+            if (gameState.soundFX) SoundFX.playReload();
         }
+    </script>
 
-        // 主繪圖與更新循環
-        function gameLoop(timestamp) {
-            if (!state.lastTime) state.lastTime = timestamp;
-            const deltaTime = (timestamp - state.lastTime) / 1000;
-            state.lastTime = timestamp;
+    <script>
+        // --- CONTROLS & INTERACTIVE EVENT LISTENERS ---
+        window.addEventListener('load', async () => {
+            // STEP 1: Load configurations & verify permissions
+            document.getElementById('init-step-1').innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i> <span class="text-green-400">惡搞物理引擎加載成功！</span>';
+            document.getElementById('init-step-2').classList.remove('opacity-30');
+            document.getElementById('init-step-2').innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i> <span class="text-green-400">聲效調頻核心就緒。</span>';
+            document.getElementById('init-step-3').classList.remove('opacity-30');
 
-            if (state.detectorMode === 'simulation' || videoFeed.readyState !== videoFeed.HAVE_ENOUGH_DATA) {
-                drawVirtualBackground(ctx);
+            // Start Back-Camera by default
+            const hasCam = await startCamera('environment');
+            if (hasCam) {
+                initFaceTracker();
+                document.getElementById('init-step-3').innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i> <span class="text-green-400">AR 面部雷達探測器在線！</span>';
             } else {
-                ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+                document.getElementById('init-step-3').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> <span class="text-yellow-400">雷達離線，全息模擬補償啟動！</span>';
             }
 
-            if (state.gameActive) {
-                scanForHumanTarget(deltaTime);
+            // Remove loading screen on ready
+            setTimeout(() => {
+                const overlay = document.getElementById('loading-overlay');
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 500);
+            }, 1000);
 
-                if (state.heat > 0) {
-                    const coolingRate = state.overheated ? 12 : 22;
-                    state.heat -= coolingRate * deltaTime;
-                    if (state.heat <= 0) {
-                        state.heat = 0;
-                        if (state.overheated) {
-                            state.overheated = false;
-                            overheatAlert.classList.add('hidden');
+            // Start Core Animation Game Loop
+            requestAnimationFrame(runMainLoop);
+        });
+
+        // 1. Shooter Firing Clicks
+        document.getElementById('btn-shoot').addEventListener('click', (e) => {
+            e.stopPropagation();
+            fireWeapon();
+        });
+
+        // Support direct touch/click on viewports to fire at exact spot (Tactile fun!)
+        canvas.addEventListener('mousedown', (e) => {
+            // Tap to shoot coordinates
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            // Generate visual laser line straight to click spot
+            gameState.weaponSwayY = 30;
+            gameState.muzzleFlashActive = true;
+            
+            // Check Hit logic for this specific click
+            let targetHit = false;
+
+            if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
+                for (let i = 0; i < gameState.faces.length; i++) {
+                    const face = gameState.faces[i];
+                    const mapped = coordinateMapping(face.x, face.y, face.width, face.height);
+                    if (x >= mapped.x && x <= mapped.x + mapped.w &&
+                        y >= mapped.y && y <= mapped.y + mapped.h) {
+                        targetHit = true;
+                        handleTargetScore(x, y, `VICTIM_${i+1}`);
+                        break;
+                    }
+                }
+            }
+
+            if (!targetHit && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
+                for (let i = gameState.virtualTargets.length - 1; i >= 0; i--) {
+                    const target = gameState.virtualTargets[i];
+                    const dist = Math.hypot(x - target.x, y - target.y);
+                    if (dist < target.size) {
+                        targetHit = true;
+                        target.hp -= 34;
+                        if (target.hp <= 0) {
+                            handleTargetScore(target.x, target.y, `HOLOTROLL_${target.emoji}`);
+                            gameState.virtualTargets.splice(i, 1);
+                        } else {
+                            handleTargetScore(target.x, target.y, "HIT!", false);
                         }
+                        break;
                     }
-                    updateWeaponHUD();
                 }
-
-                state.lasers.forEach((laser, idx) => {
-                    laser.update(deltaTime);
-                    laser.draw(ctx);
-                    if (laser.alpha <= 0) {
-                        state.lasers.splice(idx, 1);
-                    }
-                });
-
-                if (state.target.locked) {
-                    drawBiometricLockbox();
-                }
-
-                state.particles.forEach((p, idx) => {
-                    p.update();
-                    p.draw(ctx);
-                    if (p.alpha <= 0) {
-                        state.particles.splice(idx, 1);
-                    }
-                });
-
-                state.floatingTexts.forEach((f, idx) => {
-                    f.update(deltaTime);
-                    f.draw(ctx);
-                    if (f.alpha <= 0) {
-                        state.floatingTexts.splice(idx, 1);
-                    }
-                });
-
-                drawCrosshair();
             }
 
-            requestAnimationFrame(gameLoop);
-        }
+            // Sub ammo
+            gameState.ammo = Math.max(0, gameState.ammo - 1);
+            updateAmmoHUD();
+            if (gameState.soundFX) SoundFX.playLaser();
+        });
 
-        // 繪製科技霓虹生物鎖定框
-        function drawBiometricLockbox() {
-            const t = state.target;
-            const halfW = t.width / 2;
-            const halfH = t.height / 2;
-            const time = Date.now() * 0.003;
-
-            ctx.save();
-            
-            const isTargetCenter = (gameCanvas.width/2 >= t.x - halfW && gameCanvas.width/2 <= t.x + halfW &&
-                                    gameCanvas.height/2 >= t.y - halfH && gameCanvas.height/2 <= t.y + halfH);
-            
-            ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.8)' : 'rgba(34, 211, 238, 0.8)';
-            ctx.shadowColor = isTargetCenter ? '#f43f5e' : '#22d3ee';
-            ctx.shadowBlur = 10;
-            ctx.lineWidth = 2;
-
-            const bracketLength = 25;
-            
-            ctx.beginPath();
-            ctx.moveTo(t.x - halfW + bracketLength, t.y - halfH);
-            ctx.lineTo(t.x - halfW, t.y - halfH);
-            ctx.lineTo(t.x - halfW, t.y - halfH + bracketLength);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(t.x + halfW - bracketLength, t.y - halfH);
-            ctx.lineTo(t.x + halfW, t.y - halfH);
-            ctx.lineTo(t.x + halfW, t.y - halfH + bracketLength);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(t.x - halfW + bracketLength, t.y + halfH);
-            ctx.lineTo(t.x - halfW, t.y + halfH);
-            ctx.lineTo(t.x - halfW, t.y + halfH - bracketLength);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(t.x + halfW - bracketLength, t.y + halfH);
-            ctx.lineTo(t.x + halfW, t.y + halfH);
-            ctx.lineTo(t.x + halfW, t.y + halfH - bracketLength);
-            ctx.stroke();
-
-            ctx.fillStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.04)' : 'rgba(34, 211, 238, 0.03)';
-            ctx.fillRect(t.x - halfW, t.y - halfH, t.width, t.height);
-
-            const scanY = t.y - halfH + ((Math.sin(time) + 1) / 2) * t.height;
-            ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.4)' : 'rgba(34, 211, 238, 0.4)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(t.x - halfW, scanY);
-            ctx.lineTo(t.x + halfW, scanY);
-            ctx.stroke();
-
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-            ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.5)' : 'rgba(34, 211, 238, 0.5)';
-            ctx.lineWidth = 1;
-            
-            const panelW = 190;
-            const panelH = 55;
-            const panelX = t.x - panelW / 2;
-            
-            let panelY = t.y - halfH - panelH - 12;
-            if (panelY < 10) {
-                panelY = t.y + halfH + 12;
-            }
-            
-            ctx.beginPath();
-            ctx.roundRect(panelX, panelY, panelW, panelH, 6);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.strokeStyle = isTargetCenter ? 'rgba(244, 63, 94, 0.4)' : 'rgba(34, 211, 238, 0.4)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            if (panelY < t.y) {
-                ctx.moveTo(t.x, panelY + panelH);
-                ctx.lineTo(t.x, t.y - halfH);
+        // 2. Setting controls panel toggling
+        document.getElementById('btn-settings-toggle').addEventListener('click', (e) => {
+            const panel = document.getElementById('settings-panel');
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
             } else {
-                ctx.moveTo(t.x, panelY);
-                ctx.lineTo(t.x, t.y + halfH);
-            }
-            ctx.stroke();
-
-            ctx.fillStyle = isTargetCenter ? '#f43f5e' : '#22d3ee';
-            ctx.font = 'bold 11px Orbitron, sans-serif';
-            ctx.fillText("TARGET: HOMO SAPIENS (HEAD)", panelX + 8, panelY + 16);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = 'bold 9px "Microsoft JhengHei", sans-serif';
-            ctx.fillText(`${t.funnyLabel}:`, panelX + 8, panelY + 32);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.font = 'bold 10px "Microsoft JhengHei", sans-serif';
-            ctx.fillText(t.funnyValue, panelX + 8, panelY + 45);
-
-            ctx.restore();
-        }
-
-        // 繪製主瞄準準星
-        function drawCrosshair() {
-            const cx = gameCanvas.width / 2;
-            const cy = gameCanvas.height / 2;
-            const size = 32;
-            const time = Date.now() * 0.0025;
-
-            ctx.save();
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = state.overheated ? '#f43f5e' : '#22d3ee';
-
-            ctx.strokeStyle = state.overheated ? 'rgba(244, 63, 94, 0.8)' : 'rgba(34, 211, 238, 0.8)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(cx, cy, size + 12, time, time + Math.PI * 0.4);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.arc(cx, cy, size + 12, time + Math.PI, time + Math.PI * 1.4);
-            ctx.stroke();
-
-            ctx.fillStyle = state.overheated ? '#f43f5e' : '#22d3ee';
-            ctx.beginPath();
-            ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.moveTo(cx, cy - size); ctx.lineTo(cx, cy - size + 12);
-            ctx.moveTo(cx, cy + size); ctx.lineTo(cx, cy + size - 12);
-            ctx.moveTo(cx - size, cy); ctx.lineTo(cx - size + 12, cy);
-            ctx.moveTo(cx + size, cy); ctx.lineTo(cx + size - 12, cy);
-            ctx.stroke();
-
-            ctx.restore();
-        }
-
-        // 綁定點擊與相機啟動 (常規啟動)
-        startBtn.addEventListener('click', async () => {
-            sfx.init();
-            permissionScreen.classList.add('hidden');
-            await initCamera();
-            state.gameActive = true;
-            state.lastTime = performance.now();
-        });
-
-        shootBtn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
-            fireWeapon();
-        });
-
-        shootBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            fireWeapon();
-        }, { passive: false });
-
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                fireWeapon();
+                panel.classList.add('hidden');
             }
         });
 
-        requestAnimationFrame(gameLoop);
+        document.getElementById('btn-settings-close').addEventListener('click', () => {
+            document.getElementById('settings-panel').classList.add('hidden');
+        });
+
+        // 3. Modulators toggles binding
+        document.getElementById('toggle-tracking').addEventListener('change', (e) => {
+            gameState.faceTrackingEnabled = e.target.checked;
+        });
+
+        document.getElementById('toggle-virtual').addEventListener('change', (e) => {
+            gameState.simTargetsEnabled = e.target.checked;
+            if (!gameState.simTargetsEnabled) {
+                gameState.virtualTargets = [];
+            }
+        });
+
+        document.getElementById('toggle-speak').addEventListener('change', (e) => {
+            gameState.soundSpeak = e.target.checked;
+        });
+
+        // Camera Flip Handler
+        document.getElementById('btn-camera-flip').addEventListener('click', async () => {
+            const nextMode = (gameState.currentFacingMode === 'environment') ? 'user' : 'environment';
+            const flipped = await startCamera(nextMode);
+            if (flipped) {
+                initFaceTracker();
+            }
+        });
+
+        // Weapon swaying lag on orientation/touch moves
+        window.addEventListener('mousemove', (e) => {
+            // Weapon swaying inertia simulation
+            const intensity = 0.08;
+            gameState.weaponSwayX = -(e.clientX - window.innerWidth / 2) * intensity;
+            gameState.weaponSwayY = -(e.clientY - window.innerHeight / 2) * intensity;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                const t = e.touches[0];
+                const intensity = 0.08;
+                gameState.weaponSwayX = -(t.clientX - window.innerWidth / 2) * intensity;
+                gameState.weaponSwayY = -(t.clientY - window.innerHeight / 2) * intensity;
+            }
+        });
     </script>
 </body>
 </html>
