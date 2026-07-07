@@ -2,396 +2,337 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AR 惡搞特工：真人鎖定槍戰 (Meme Tactical Shooter)</title>
-    <!-- Tailwind CSS for modern layout styling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>每日一斬！直到主管發現 (Mobile FPS Edition)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome for futuristic sci-fi icons -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Import Google Fonts (Inter & Orbitron for sci-fi look) -->
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts for arcade and comic style -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800;900&family=ZCOOL+KuaiLe&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #050508;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: #030303;
             user-select: none;
             -webkit-user-select: none;
+            touch-action: none; /* Prevents double-tap zoom and scrolling in iOS Safari */
+            overflow: hidden;
+        }
+        .meme-font {
+            font-family: 'ZCOOL KuaiLe', 'Orbitron', sans-serif;
         }
         .scifi-font {
             font-family: 'Orbitron', sans-serif;
         }
         
-        /* Custom Keyframe Animations for Prank Effects */
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100vh); }
+        /* Interactive feedback animations */
+        @keyframes chop-swing {
+            0% { transform: rotate(0deg) translate(0px, 0px) scale(1); }
+            15% { transform: rotate(-45deg) translate(-20px, -20px) scale(1.1); }
+            30% { transform: rotate(90deg) translate(-50px, 70px) scale(0.85); }
+            70% { transform: rotate(10deg) translate(-10px, 15px) scale(0.95); }
+            100% { transform: rotate(0deg) translate(0px, 0px) scale(1); }
         }
-        .scanline-effect {
-            animation: scanline 6s linear infinite;
-        }
-
-        @keyframes glitch {
-            0% { clip-path: inset(40% 0 61% 0); }
-            20% { clip-path: inset(92% 0 1% 0); }
-            40% { clip-path: inset(15% 0 80% 0); }
-            60% { clip-path: inset(80% 0 5% 0); }
-            80% { clip-path: inset(3% 0 92% 0); }
-            100% { clip-path: inset(40% 0 61% 0); }
-        }
-        .glitch-text {
-            animation: glitch 1s linear infinite alternate-reverse;
+        .chop-animation {
+            animation: chop-swing 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        @keyframes pulse-soft {
-            0%, 100% { opacity: 0.2; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.05); }
+        @keyframes screen-red-flash {
+            0%, 100% { background-color: rgba(239, 68, 68, 0); }
+            50% { background-color: rgba(239, 68, 68, 0.45); }
         }
-        .pulse-scanner {
-            animation: pulse-soft 2s ease-in-out infinite;
-        }
-
-        /* Screen Shake for Weapon Firing */
-        @keyframes shake {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            10% { transform: translate(-8px, -5px) scale(1.01); }
-            20% { transform: translate(8px, 5px) scale(1.01); }
-            30% { transform: translate(-10px, 3px) scale(1); }
-            40% { transform: translate(6px, -6px) scale(1.01); }
-            50% { transform: translate(-5px, 5px) scale(1); }
-            60% { transform: translate(7px, -2px) scale(1.01); }
-            70% { transform: translate(-4px, -4px) scale(1); }
-            80% { transform: translate(4px, 4px) scale(1.01); }
-            90% { transform: translate(-2px, 2px) scale(1); }
-        }
-        .shake-active {
-            animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+        .caught-active {
+            animation: screen-red-flash 0.3s ease-in-out 3;
         }
 
-        /* Custom Scrollbar */
+        /* Safe UI drawer animation */
+        .drawer-open {
+            transform: translateY(0%) !important;
+        }
+        
+        /* Mobile Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #ec4899;
-            border-radius: 10px;
+            background: #f43f5e;
+            border-radius: 99px;
         }
     </style>
 
-    <!-- Tracking.js for super lightweight, fully offline local face tracking -->
+    <!-- Tracking.js for face detection -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
 </head>
-<body class="relative w-screen h-screen overflow-hidden text-white flex flex-col items-center justify-center">
+<body class="relative w-screen h-[100dvh] overflow-hidden text-white flex flex-col justify-between">
 
-    <!-- AR Viewport Container -->
-    <div id="game-container" class="relative w-full h-full flex flex-col justify-between overflow-hidden">
+    <!-- The master viewport container - perfectly bound to mobile screen -->
+    <div id="game-container" class="absolute inset-0 w-full h-full z-0 overflow-hidden bg-slate-950">
+        <!-- Background camera stream -->
+        <video id="video-feed" class="absolute inset-0 w-full h-full object-cover pointer-events-none z-0" autoplay playsinline muted loop></video>
+        <!-- Overlay HUD rendering Canvas -->
+        <canvas id="fx-canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></canvas>
         
-        <!-- Live Camera Stream (Mirrored by default for selfies, can toggle) -->
-        <div id="viewport-wrapper" class="absolute inset-0 w-full h-full z-0 overflow-hidden bg-radial from-slate-900 to-black">
-            <!-- Cam feedback -->
-            <video id="video-feed" class="absolute w-full h-full object-cover pointer-events-none" autoplay playsinline muted loop></video>
-            <!-- Canvas Overlay for Tracking and FX -->
-            <canvas id="fx-canvas" class="absolute inset-0 w-full h-full z-10 pointer-events-none"></canvas>
-            
-            <!-- Futuristic Scanline Grid -->
-            <div class="absolute inset-0 pointer-events-none z-10 opacity-[0.08] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,3px_100%]"></div>
-            <!-- Laser Scan Line -->
-            <div id="laser-line" class="absolute top-0 left-0 w-full h-[2px] bg-cyan-500 shadow-[0_0_10px_#06b6d4] scanline-effect pointer-events-none z-10"></div>
-        </div>
+        <!-- CRT-like Grid Filter for Retro Arcade Vibe -->
+        <div class="absolute inset-0 pointer-events-none z-10 opacity-[0.06] bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(0,255,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,3px_100%]"></div>
+        <!-- Busted / Red Alert frame overlay -->
+        <div id="screen-caught-flash" class="absolute inset-0 z-20 pointer-events-none"></div>
+        
+        <!-- Prank mode blurred fallback background when camera is unavailable -->
+        <div id="fallback-bg" class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center filter blur-md opacity-20 pointer-events-none transition-opacity duration-500"></div>
+    </div>
 
-        <!-- STAGE 1: Tech UI top panel -->
-        <header class="relative z-20 w-full p-4 flex justify-between items-start pointer-events-none">
-            <!-- Left: Player Stats Card -->
-            <div class="flex flex-col gap-1 bg-black/60 backdrop-blur-md p-3 rounded-xl border border-cyan-500/30 shadow-[0_4px_20px_rgba(6,182,212,0.15)] pointer-events-auto">
-                <div class="flex items-center gap-2">
-                    <span class="text-xs font-semibold px-2 py-0.5 bg-pink-500 rounded-full animate-pulse uppercase scifi-font tracking-widest text-[10px]">Troll Agent</span>
-                    <span id="level-display" class="scifi-font text-cyan-400 font-bold">LV.01</span>
+    <!-- HUD Header: Configured with padding matching dynamic island and notches -->
+    <header class="relative z-30 w-full px-4 pt-[env(safe-area-inset-top,16px)] pb-2 flex flex-col gap-1.5 pointer-events-none select-none">
+        <div class="w-full flex justify-between items-center gap-2">
+            <!-- Left Panel: Compensation Earned -->
+            <div class="bg-black/80 backdrop-blur-md px-3 py-2 rounded-2xl border border-rose-500/40 flex flex-col gap-0.5 shadow-lg pointer-events-auto min-w-[130px] flex-shrink-0">
+                <div class="text-[9px] text-rose-400 font-extrabold tracking-widest uppercase">精神補償金 (Damages)</div>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-xs font-black text-rose-500">$</span>
+                    <span id="score-display" class="scifi-font text-lg font-black text-white">0.00</span>
                 </div>
-                <div class="mt-1">
-                    <div class="text-[10px] text-gray-400 font-medium">Troll Score / 惡搞積分</div>
-                    <div id="score-display" class="scifi-font text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-cyan-400">000,000</div>
-                </div>
-                <div class="mt-1 w-36 bg-gray-800 rounded-full h-1.5 overflow-hidden">
-                    <div id="xp-bar" class="bg-gradient-to-r from-cyan-400 to-pink-500 h-1.5 rounded-full transition-all duration-300" style="width: 10%"></div>
-                </div>
-                <div class="text-[9px] text-gray-400 flex justify-between mt-0.5 font-mono">
-                    <span>NEXT LEVEL</span>
-                    <span id="xp-text">10 / 100</span>
+                <div class="text-[8px] text-gray-400 font-medium flex justify-between">
+                    <span>摸魚段位:</span>
+                    <span id="rank-display" class="font-black text-yellow-400">實習生</span>
                 </div>
             </div>
 
-            <!-- Right: Weapon, Audio, and Cam Control Switches -->
-            <div class="flex flex-col gap-2 items-end pointer-events-auto">
-                <!-- Mini radar map -->
-                <div class="relative w-20 h-20 rounded-full border border-pink-500/30 bg-black/50 overflow-hidden flex items-center justify-center backdrop-blur-xs shadow-[0_0_10px_rgba(236,72,153,0.1)]">
-                    <div class="absolute inset-0 border-t-2 border-pink-500/50 rounded-full animate-spin [animation-duration:3s]"></div>
-                    <div class="absolute w-12 h-12 border border-pink-500/20 rounded-full"></div>
-                    <div class="absolute w-6 h-6 border border-pink-500/10 rounded-full"></div>
-                    <div class="absolute w-0.5 h-16 bg-pink-500/30"></div>
-                    <div class="absolute h-0.5 w-16 bg-pink-500/30"></div>
-                    <!-- Small blinking targets -->
-                    <div id="radar-blip-1" class="absolute w-1.5 h-1.5 bg-cyan-400 rounded-full animate-ping" style="top: 25%; left: 65%;"></div>
-                    <div id="radar-blip-2" class="absolute w-1.5 h-1.5 bg-pink-500 rounded-full animate-ping" style="top: 70%; left: 30%;"></div>
+            <!-- Right Panel: Boss Alert AI Engine Status -->
+            <div id="boss-hud" class="bg-black/80 backdrop-blur-md px-3 py-2 rounded-2xl border border-green-500/40 flex items-center gap-2 shadow-lg pointer-events-auto flex-shrink-0">
+                <div class="flex flex-col items-end">
+                    <span class="text-[8px] text-gray-400 font-bold tracking-wider uppercase">主管監視狀態</span>
+                    <span id="boss-status-text" class="text-xs font-black text-green-400 meme-font">背對著你 (安全)</span>
                 </div>
-
-                <!-- Action menu toggle button -->
-                <button id="btn-settings-toggle" class="p-2.5 bg-black/60 rounded-full border border-cyan-500/40 text-cyan-400 shadow-md hover:bg-cyan-500 hover:text-black transition-all">
-                    <i class="fa-solid fa-gears text-lg"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- STAGE 2: Central targeting crosshair -->
-        <main class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <!-- Cyber Crosshair -->
-            <div id="crosshair-system" class="relative w-44 h-44 flex items-center justify-center transition-transform duration-100">
-                <!-- Circular outer scope -->
-                <div class="absolute inset-0 border border-dashed border-cyan-500/30 rounded-full animate-spin [animation-duration:20s]"></div>
-                <!-- Animated brackets -->
-                <div class="absolute w-36 h-36 border-t-2 border-l-2 border-pink-500 rounded-tl-xl opacity-80"></div>
-                <div class="absolute w-36 h-36 border-t-2 border-r-2 border-pink-500 rounded-tr-xl opacity-80"></div>
-                <div class="absolute w-36 h-36 border-b-2 border-l-2 border-pink-500 rounded-bl-xl opacity-80"></div>
-                <div class="absolute w-36 h-36 border-b-2 border-r-2 border-pink-500 rounded-br-xl opacity-80"></div>
-                <!-- Inner warning circle -->
-                <div id="target-lock-ring" class="absolute w-24 h-24 border-2 border-cyan-400 rounded-full scale-75 opacity-60 transition-all duration-300"></div>
-                <!-- Scanning text readout inside crosshair -->
-                <div class="absolute text-[8px] text-cyan-400 font-mono scifi-font tracking-widest translate-y-12 bg-black/40 px-1 py-0.5 rounded">
-                    DIST: <span id="target-dist">SCANNING</span>
-                </div>
-                <!-- Dead center pin -->
-                <div class="w-2.5 h-2.5 bg-red-500 rounded-full border border-white shadow-[0_0_10px_#f43f5e] z-10 animate-pulse"></div>
-            </div>
-        </main>
-
-        <!-- Weapons Display in First Person (Bottom right Blaster) -->
-        <div id="weapon-viewport" class="absolute bottom-0 right-0 w-[320px] h-[320px] pointer-events-none z-20 flex items-end justify-end overflow-visible select-none">
-            <!-- Weapon swaying container -->
-            <div id="weapon-holder" class="relative origin-bottom-right transition-transform duration-75 select-none translate-y-8 translate-x-4">
-                <!-- Muzzle Flash Visual Container -->
-                <div id="muzzle-flash" class="absolute -top-12 -left-12 w-40 h-40 bg-radial from-white via-yellow-400 to-transparent rounded-full opacity-0 pointer-events-none mix-blend-screen scale-50 transition-all duration-75"></div>
-                
-                <!-- Blaster SVG Model -->
-                <svg id="blaster-svg" class="w-80 h-80 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Gun base chassis -->
-                    <path d="M120 280 L220 180 L350 220 L350 380 L140 380 Z" fill="#1e293b" stroke="#334155" stroke-width="4"/>
-                    <!-- Cyber metallic plate -->
-                    <path d="M180 230 L320 230 L350 350 L200 350 Z" fill="#0f172a" />
-                    <!-- Bright Weapon Neon Stripe (Changes Color dynamically) -->
-                    <path id="weapon-stripe" d="M210 240 L300 240 L310 260 L220 260 Z" fill="#22d3ee" class="animate-pulse"/>
-                    <!-- Cyber Battery Core -->
-                    <rect x="250" y="280" width="60" height="25" rx="5" fill="#020617" stroke="#ec4899" stroke-width="2"/>
-                    <rect id="battery-level" x="254" y="284" width="52" height="17" rx="3" fill="#ec4899"/>
-                    <!-- Barrel System -->
-                    <rect x="80" y="195" width="140" height="40" rx="4" fill="#334155" stroke="#475569" stroke-width="3" transform="rotate(-30, 80, 195)"/>
-                    <rect x="60" y="190" width="40" height="26" rx="2" fill="#0f172a" stroke="#22d3ee" stroke-width="2" transform="rotate(-30, 60, 190)"/>
-                    <!-- Power cable bundle -->
-                    <path d="M160 260 Q190 290 240 290" stroke="#f43f5e" stroke-width="4" fill="none"/>
-                </svg>
-            </div>
-        </div>
-
-        <!-- STAGE 3: Prank weapon panel & shooter triggers -->
-        <footer class="relative z-20 w-full p-6 flex flex-col items-center gap-4 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-            <!-- Weapon Switcher & Custom text box -->
-            <div class="w-full max-w-lg flex flex-col gap-2">
-                <!-- Weapon carousel -->
-                <div class="flex justify-around items-center bg-black/70 backdrop-blur-md p-1.5 rounded-full border border-pink-500/30 shadow-[0_0_15px_rgba(236,72,153,0.15)]">
-                    <button onclick="selectWeapon('laser')" id="wpn-laser" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border-2 border-cyan-400 bg-cyan-900/30 text-cyan-400 font-bold transition-all duration-200">
-                        <i class="fa-solid fa-bolt-lightning text-lg mb-0.5"></i>
-                        <span class="text-[9px] uppercase tracking-wider">光學雷射</span>
-                    </button>
-                    <button onclick="selectWeapon('confetti')" id="wpn-confetti" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-pink-400 transition-all duration-200">
-                        <i class="fa-solid fa-gift text-lg mb-0.5"></i>
-                        <span class="text-[9px] uppercase tracking-wider">彩帶禮炮</span>
-                    </button>
-                    <button onclick="selectWeapon('water')" id="wpn-water" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-blue-400 transition-all duration-200">
-                        <i class="fa-solid fa-droplet text-lg mb-0.5"></i>
-                        <span class="text-[9px] uppercase tracking-wider">超能噴水</span>
-                    </button>
-                    <button onclick="selectWeapon('love')" id="wpn-love" class="wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-rose-400 transition-all duration-200">
-                        <i class="fa-solid fa-heart-pulse text-lg mb-0.5"></i>
-                        <span class="text-[9px] uppercase tracking-wider">滿滿愛意</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Weapon state & Massive Shoot Triggers -->
-            <div class="w-full max-w-lg flex items-center justify-between gap-4 mt-1">
-                <!-- Ammo counter HUD (Left) -->
-                <div class="flex flex-col items-start bg-black/60 p-2.5 rounded-xl border border-gray-700/50 w-28">
-                    <span class="text-[9px] text-gray-400 font-bold uppercase scifi-font tracking-widest">Ammunition</span>
-                    <div class="flex items-baseline gap-1 mt-0.5">
-                        <span id="ammo-count" class="scifi-font text-2xl font-black text-rose-500">10</span>
-                        <span class="text-xs text-gray-500 font-mono">/10</span>
-                    </div>
-                    <!-- Bullet graphical display -->
-                    <div class="flex gap-0.5 mt-1.5 w-full">
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                        <div class="ammo-bar h-2 w-1.5 bg-rose-500 rounded-t-[1px]"></div>
-                    </div>
-                </div>
-
-                <!-- GIANT FIRE BUTTON (Center/Right) -->
-                <button id="btn-shoot" class="relative group active:scale-95 flex-1 h-20 bg-gradient-to-r from-red-600 to-pink-600 rounded-2xl border-b-4 border-red-800 shadow-[0_10px_25px_rgba(220,38,38,0.4)] flex items-center justify-center gap-3 transition-transform overflow-hidden cursor-pointer select-none">
-                    <!-- Overlay flash effect -->
-                    <div class="absolute inset-0 bg-white/20 opacity-0 group-active:opacity-100 transition-opacity"></div>
-                    <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                    
-                    <i class="fa-solid fa-crosshairs text-2xl text-white animate-pulse"></i>
-                    <span class="text-xl font-black tracking-widest scifi-font text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">開火 (FIRE)</span>
-                </button>
-            </div>
-        </footer>
-
-        <!-- Pop-out Cyber Settings Panel -->
-        <div id="settings-panel" class="absolute right-4 top-20 z-40 w-80 max-h-[70vh] overflow-y-auto bg-slate-950/95 border border-cyan-500/30 rounded-2xl p-4 shadow-[0_15px_40px_rgba(0,0,0,0.8)] flex-col gap-4 hidden transition-all duration-300">
-            <div class="flex justify-between items-center border-b border-gray-800 pb-2">
-                <span class="scifi-font text-cyan-400 font-bold"><i class="fa-solid fa-sliders mr-2"></i>戰術調諧系統</span>
-                <button id="btn-settings-close" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <!-- Custom Hit Text (Prank customization) -->
-            <div class="flex flex-col gap-1.5">
-                <label class="text-xs text-gray-300 font-semibold flex items-center gap-1.5">
-                    <i class="fa-solid fa-signature text-pink-500"></i> 自定義整人語句 (Custom Insult):
-                </label>
-                <input type="text" id="custom-insult-input" value="大笨蛋！！" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-pink-300 focus:outline-hidden focus:border-pink-500 focus:ring-1 focus:ring-pink-500 tracking-wide font-semibold">
-                <p class="text-[9px] text-gray-500">擊中目標時會在鏡頭真人臉上噴射此字句！</p>
-            </div>
-
-            <!-- Toggle switches -->
-            <div class="flex flex-col gap-3 mt-1">
-                <!-- AR Face Tracking Selector -->
-                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
-                    <div class="flex flex-col">
-                        <span class="text-xs font-bold text-gray-200">真人臉部偵測 (Face AR)</span>
-                        <span class="text-[9px] text-gray-400">使用鏡頭實時定位面部</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggle-tracking" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
-                    </label>
-                </div>
-
-                <!-- Sim Target Spawn -->
-                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
-                    <div class="flex flex-col">
-                        <span class="text-xs font-bold text-gray-200">虛擬惡搞幽靈 (Virtual Targets)</span>
-                        <span class="text-[9px] text-gray-400">在鏡頭周圍飄移的虛擬目標</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggle-virtual" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-pink-500"></div>
-                    </label>
-                </div>
-
-                <!-- Sound Speak synthesise -->
-                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
-                    <div class="flex flex-col">
-                        <span class="text-xs font-bold text-gray-200">語音嘲諷 (Audio Roast)</span>
-                        <span class="text-[9px] text-gray-400">手機會用合成語音大聲嘲笑對方</span>
-                    </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="toggle-speak" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-gray-300 after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
-                    </label>
-                </div>
-
-                <!-- Camera Switch (Flip) -->
-                <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-lg border border-slate-800">
-                    <div class="flex flex-col">
-                        <span class="text-xs font-bold text-gray-200">翻轉鏡頭 (Flip Camera)</span>
-                        <span class="text-[9px] text-gray-400">前置自拍 / 後置拍朋友</span>
-                    </div>
-                    <button id="btn-camera-flip" class="px-3 py-1.5 bg-slate-800 hover:bg-cyan-500 hover:text-black border border-slate-700 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all">
-                        <i class="fa-solid fa-camera-rotate"></i> 翻轉
-                    </button>
-                </div>
-            </div>
-
-            <!-- Leaderboard list for pranking -->
-            <div class="flex flex-col gap-2 mt-2">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest scifi-font">👑 特工黑名單榜單</span>
-                <div class="text-[10px] bg-slate-900 rounded-lg p-2 font-mono flex flex-col gap-1 text-slate-300">
-                    <div class="flex justify-between text-yellow-400 font-bold">
-                        <span>1. 埃隆·馬斯克 (SpaceTroll)</span>
-                        <span>999,999分</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span>2. 被你射中的大笨蛋 (You)</span>
-                        <span id="board-you-score">0分</span>
-                    </div>
-                    <div class="flex justify-between text-slate-500">
-                        <span>3. 你的普通朋友 (Noob)</span>
-                        <span>-150分</span>
-                    </div>
+                <div class="relative flex h-4 w-4">
+                    <span id="boss-light-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span id="boss-light-dot" class="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
                 </div>
             </div>
         </div>
 
-        <!-- Pop-up Splash Screens: Level Up & Notification -->
-        <div id="level-up-splash" class="absolute inset-0 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-all duration-500 hidden select-none pointer-events-none">
-            <div class="text-center p-8 max-w-sm flex flex-col items-center gap-4 border-2 border-yellow-400 rounded-3xl shadow-[0_0_50px_rgba(234,179,8,0.5)] bg-slate-950 scale-95 transition-transform duration-300">
-                <div class="w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center text-black text-5xl animate-bounce shadow-[0_0_20px_#eab308]">
-                    <i class="fa-solid fa-trophy"></i>
-                </div>
-                <h2 class="scifi-font text-3xl font-black text-yellow-400 tracking-wider uppercase animate-pulse">Level Up!</h2>
-                <p id="level-badge" class="font-extrabold text-pink-500 text-lg uppercase tracking-wider">整人少將</p>
-                <p class="text-sm text-gray-300">你已被升等！解鎖更強大的惡搞武器特權。多射擊眼前的人以獲取更多積分！</p>
-                <div class="w-full bg-slate-800 p-3 rounded-xl border border-yellow-400/30 font-mono text-[11px] text-yellow-400 flex justify-between">
-                    <span>火力 +20%</span>
-                    <span>嘲諷加倍 +100%</span>
-                </div>
-                <button onclick="dismissLevelUp()" class="pointer-events-auto px-6 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-black font-extrabold rounded-xl transition-all shadow-[0_4px_15px_rgba(234,179,8,0.3)] uppercase tracking-widest text-sm">
-                    繼續惡搞
-                </button>
-            </div>
-        </div>
-
-        <!-- Initializing & Cam Request Screen -->
-        <div id="loading-overlay" class="absolute inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center gap-6 p-6">
-            <div class="relative w-40 h-40 flex items-center justify-center">
-                <!-- Glowing futuristic rings -->
-                <div class="absolute inset-0 border-t-4 border-b-4 border-cyan-400 rounded-full animate-spin [animation-duration:1.5s]"></div>
-                <div class="absolute inset-4 border-r-4 border-l-4 border-pink-500 rounded-full animate-spin [animation-duration:3s] reverse"></div>
-                <i class="fa-solid fa-fingerprint text-5xl text-cyan-400 animate-pulse"></i>
+        <!-- Combo badge and controller utility bar -->
+        <div class="w-full flex justify-between items-center px-1">
+            <div id="combo-badge" class="scale-0 transition-transform duration-200 bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 text-white font-black px-2.5 py-0.5 rounded-full text-[10px] shadow-md border border-white/20 flex items-center gap-1.5">
+                <i class="fa-solid fa-fire animate-bounce text-[9px]"></i> <span id="combo-text">1 連砍!</span>
             </div>
             
-            <div class="text-center flex flex-col gap-2 max-w-sm">
-                <h1 class="scifi-font text-2xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-pink-500 to-yellow-300">AR MEME AGENT</h1>
-                <p class="text-xs text-cyan-400/80 font-mono tracking-widest uppercase">系統初始化中...</p>
-                
-                <!-- Loading descriptive steps -->
-                <div class="mt-4 p-3 rounded-xl bg-slate-900 border border-cyan-500/20 font-mono text-left text-[11px] text-gray-400 flex flex-col gap-1.5 shadow-inner">
-                    <div id="init-step-1" class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin text-cyan-400"></i> <span id="text-step-1">正在加載惡搞物理引擎...</span></div>
-                    <div id="init-step-2" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[8px]"></i> 正在配置 Web Audio 合成聲效...</div>
-                    <div id="init-step-3" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[8px]"></i> 正在啟用實時 AR 面部雷達探測器...</div>
-                </div>
-
-                <p class="text-[10px] text-slate-500 leading-relaxed mt-4">
-                    ⚠️ 惡搞提示：請允許相機權限以鎖定您的朋友或自己！若在無鏡頭或不授權環境中，系統會自動切換為 <b>「全息虛擬訓練模式」</b> 讓您一樣能玩得爽快！
-                </p>
-
-                <!-- Trigger button manually if permissions prompt gets stuck -->
-                <button id="btn-start-game" class="hidden mt-4 px-6 py-3 bg-gradient-to-r from-cyan-500 to-pink-500 rounded-xl font-bold tracking-widest text-sm hover:scale-105 active:scale-95 transition-transform shadow-lg shadow-pink-500/20">
-                    啟動戰略鎖定 (START AR HUNT)
+            <div class="flex gap-2 pointer-events-auto">
+                <button id="btn-camera-flip" class="w-8 h-8 rounded-full bg-black/70 border border-white/10 flex items-center justify-center text-white active:scale-90 transition-transform">
+                    <i class="fa-solid fa-camera-rotate text-xs"></i>
+                </button>
+                <button id="btn-settings-toggle" class="w-8 h-8 rounded-full bg-black/70 border border-white/10 flex items-center justify-center text-rose-400 active:scale-90 transition-transform">
+                    <i class="fa-solid fa-sliders text-xs"></i>
                 </button>
             </div>
         </div>
+    </header>
 
+    <!-- Tactical Target HUD Alignment -->
+    <main class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+        <div id="crosshair-system" class="relative w-28 h-28 flex items-center justify-center transition-all duration-150">
+            <!-- Dotted ring spinning -->
+            <div class="absolute inset-0 border border-dashed border-rose-500/30 rounded-full animate-spin [animation-duration:25s]"></div>
+            <!-- Retro Brackets -->
+            <div class="absolute w-24 h-24 border-t-2 border-l-2 border-yellow-400 rounded-tl-md opacity-60"></div>
+            <div class="absolute w-24 h-24 border-t-2 border-r-2 border-yellow-400 rounded-tr-md opacity-60"></div>
+            <div class="absolute w-24 h-24 border-b-2 border-l-2 border-yellow-400 rounded-bl-md opacity-60"></div>
+            <div class="absolute w-24 h-24 border-b-2 border-r-2 border-yellow-400 rounded-br-md opacity-60"></div>
+            
+            <div class="absolute text-[8px] tracking-wider text-white/90 translate-y-8 bg-rose-600/90 px-1.5 py-0.5 rounded font-black uppercase shadow">
+                🎯 鎖定：<span id="target-feedback">未進入範圍</span>
+            </div>
+            
+            <div class="w-1.5 h-1.5 bg-rose-500 rounded-full shadow-[0_0_8px_#f43f5e] z-10"></div>
+        </div>
+    </main>
+
+    <!-- Large, Responsive Bottom-Right Weapon Viewport -->
+    <div id="weapon-viewport" class="absolute bottom-[100px] right-0 w-[45%] max-w-[180px] aspect-square pointer-events-none z-20 flex items-end justify-end overflow-visible select-none pb-2 pr-2">
+        <div id="weapon-holder" class="relative origin-bottom-right select-none transition-transform duration-75">
+            <svg id="weapon-svg" class="w-full h-full drop-shadow-[0_8px_12px_rgba(0,0,0,0.8)]" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Wrapper for dynamic switching -->
+                <g id="weapon-graphics-container">
+                    <!-- Default: CARDBOARD KATANA -->
+                    <g id="weapon-cardboard">
+                        <rect x="210" y="210" width="25" height="70" rx="3" transform="rotate(45, 210, 210)" fill="#78350f" stroke="#451a03" stroke-width="2.5"/>
+                        <line x1="215" y1="230" x2="255" y2="190" stroke="#f59e0b" stroke-width="2"/>
+                        <ellipse cx="205" cy="205" rx="16" ry="8" transform="rotate(45, 205, 205)" fill="#1e293b" stroke="#0f172a" stroke-width="2.5"/>
+                        <path d="M200 200 L50 50 L35 65 L170 215 Z" fill="#d97706" stroke="#b45309" stroke-width="2.5"/>
+                        <path d="M190 190 L60 60" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>
+                        <rect x="95" y="95" width="16" height="30" rx="1.5" transform="rotate(15, 95, 95)" fill="#cbd5e1" fill-opacity="0.8"/>
+                        <path d="M50 50 L35 65" stroke="#fef08a" stroke-width="2"/>
+                    </g>
+                </g>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Mobile Bottom Safe Controls Layer -->
+    <footer class="relative z-30 w-full px-4 pb-[env(safe-area-inset-bottom,16px)] pt-2 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-3.5 items-center mt-auto">
+        <!-- Carousel indicators and swipe instructions -->
+        <div class="text-[8px] text-gray-400 tracking-widest uppercase opacity-70 pointer-events-none flex items-center gap-1">
+            <i class="fa-solid fa-left-right animate-pulse"></i> 左右滑動或點選切換整頓武器
+        </div>
+
+        <!-- Touch optimized Weapon Selector Carousel -->
+        <div class="w-full max-w-sm flex justify-around bg-black/80 backdrop-blur-md p-1 rounded-2xl border border-white/10 shadow-lg">
+            <button onclick="selectWeapon('cardboard')" id="wpn-cardboard-btn" class="wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl bg-rose-600/20 text-rose-400 border border-rose-500/30 text-[10px] font-extrabold transition-all">
+                <i class="fa-solid fa-box-open text-xs mb-0.5"></i>
+                <span>紙板神劍</span>
+            </button>
+            <button onclick="selectWeapon('leek')" id="wpn-leek-btn" class="wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl text-gray-400 border border-transparent text-[10px] font-extrabold transition-all">
+                <i class="fa-solid fa-leaf text-xs mb-0.5"></i>
+                <span>整頓大蔥</span>
+            </button>
+            <button onclick="selectWeapon('hammer')" id="wpn-hammer-btn" class="wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl text-gray-400 border border-transparent text-[10px] font-extrabold transition-all">
+                <i class="fa-solid fa-gavel text-xs mb-0.5"></i>
+                <span>尖叫神槌</span>
+            </button>
+        </div>
+
+        <!-- Big Trigger Button row -->
+        <div class="w-full max-w-sm flex items-center justify-between gap-3">
+            <!-- Dynamic Weapon Heat/Overload Dial -->
+            <div class="flex flex-col bg-black/65 p-2 rounded-xl border border-gray-800 w-24">
+                <span class="text-[8px] text-gray-500 font-black uppercase tracking-wider">砍擊效率</span>
+                <span id="weapon-status" class="text-[10px] font-black text-rose-500 meme-font mt-0.5">可揮斬</span>
+                <div class="w-full bg-gray-800 h-1.5 rounded-full mt-1 overflow-hidden">
+                    <div id="weapon-heat-bar" class="bg-rose-500 h-full w-0 transition-all duration-150"></div>
+                </div>
+            </div>
+
+            <!-- GIANT TACTILE CHOP BUTTON (Highly tap-friendly) -->
+            <button id="btn-chop" class="relative flex-1 h-14 bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 active:scale-95 text-white font-black rounded-2xl border-b-4 border-red-800 shadow-[0_4px_15px_rgba(239,68,68,0.4)] flex items-center justify-center gap-2 transition-transform overflow-hidden cursor-pointer">
+                <div class="absolute inset-0 bg-white/15 opacity-0 active:opacity-100 transition-opacity"></div>
+                <i class="fa-solid fa-hand-fist text-sm rotate-45"></i>
+                <span class="text-base tracking-widest meme-font text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">每日一斬！</span>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Bottom sliding settings drawer panel -->
+    <div id="settings-panel" class="absolute bottom-0 inset-x-0 z-40 bg-slate-950 rounded-t-3xl border-t border-rose-500/30 p-5 shadow-[0_-10px_35px_rgba(0,0,0,0.9)] flex flex-col gap-4 transform translate-y-full transition-transform duration-300">
+        <div class="w-full flex justify-between items-center border-b border-gray-900 pb-2.5">
+            <span class="meme-font text-rose-400 font-black text-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders"></i> 職場摸魚戰略組態
+            </span>
+            <button id="btn-settings-close" class="text-gray-500 hover:text-white px-2 py-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <!-- Custom Slogan Text Box -->
+        <div class="flex flex-col gap-1.5">
+            <label class="text-xs text-gray-300 font-bold flex items-center gap-1.5">
+                <i class="fa-solid fa-comment-dots text-yellow-500"></i> 自定義反骨整頓口號 (Punchline):
+            </label>
+            <input type="text" id="custom-slogan" value="立刻加薪！" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-yellow-400 focus:outline-none focus:border-rose-500 font-bold">
+            <p class="text-[9px] text-gray-500 leading-relaxed">當砍中螢幕中的真人或辦公室怨念物時，此抗議字句會從目標臉部彈射蹦出！</p>
+        </div>
+
+        <!-- Configuration Option Checklist -->
+        <div class="grid grid-cols-2 gap-2 max-h-[30vh] overflow-y-auto pr-1">
+            <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-200">實時真人 AR 偵測</span>
+                    <span class="text-[8px] text-gray-500">探測臉部進行貼圖</span>
+                </div>
+                <input type="checkbox" id="toggle-tracking" class="accent-rose-500 w-4 h-4 rounded" checked>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-200">辦公室虛擬目標</span>
+                    <span class="text-[8px] text-gray-500">生成 KPI、週報 PPT</span>
+                </div>
+                <input type="checkbox" id="toggle-virtual" class="accent-amber-500 w-4 h-4 rounded" checked>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-200">語音大聲咆哮</span>
+                    <span class="text-[8px] text-gray-500">砍中時發出抗議音頻</span>
+                </div>
+                <input type="checkbox" id="toggle-speak" class="accent-yellow-500 w-4 h-4 rounded" checked>
+            </div>
+
+            <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-gray-200">辦公室搞怪音效</span>
+                    <span class="text-[8px] text-gray-500">擊中及警告通知音效</span>
+                </div>
+                <input type="checkbox" id="toggle-audio" class="accent-rose-500 w-4 h-4 rounded" checked>
+            </div>
+        </div>
+
+        <!-- Leaderboard ranks info -->
+        <div class="flex flex-col gap-1.5 bg-slate-900/40 p-2 rounded-xl border border-slate-800">
+            <span class="text-[10px] font-black text-rose-400 tracking-wider">🏆 職場摸魚先鋒榜</span>
+            <div class="text-[9px] font-mono flex flex-col gap-1 text-slate-400">
+                <div class="flex justify-between text-yellow-500 font-bold">
+                    <span>1. 辦公室摸魚大帝 (Admin)</span>
+                    <span>$1,450,000.00</span>
+                </div>
+                <div class="flex justify-between text-white font-bold">
+                    <span>2. 反骨神將 (You)</span>
+                    <span id="board-you-score">$0.00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Busted by Boss Screen Overlay -->
+    <div id="caught-overlay" class="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-opacity duration-300 hidden">
+        <div class="text-center p-6 max-w-sm flex flex-col items-center gap-4 border border-red-500/40 rounded-3xl bg-slate-900 shadow-2xl mx-4">
+            <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl animate-bounce">
+                <i class="fa-solid fa-briefcase"></i>
+            </div>
+            <h2 class="meme-font text-xl font-black text-red-500 tracking-widest animate-pulse">遭 主 管 逮 捕！</h2>
+            <p class="text-xs text-gray-300 leading-relaxed px-2">
+                你在主管轉身探頭時大肆砍劈！主管發現你在摸魚！你被嚴厲批評，並扣減了大量的精神損害補償費。
+            </p>
+            <div class="w-full bg-slate-950 p-3 rounded-xl border border-red-500/20 font-mono text-[10px] text-red-400 flex flex-col gap-1">
+                <div class="flex justify-between"><span>精神補償損失:</span> <span class="font-extrabold">-$2,000.00</span></div>
+                <div class="flex justify-between"><span>主管警告次數:</span> <span class="font-bold text-yellow-500">HR WARNING +1</span></div>
+            </div>
+            <button onclick="resumeSlacking()" class="w-full py-3 bg-red-600 active:scale-95 text-white font-extrabold rounded-xl transition-all shadow-md uppercase tracking-wider text-xs meme-font">
+                重新偷偷整頓職場
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading screen with permission and configuration settings -->
+    <div id="loading-overlay" class="absolute inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center gap-5 p-6">
+        <div class="relative w-28 h-28 flex items-center justify-center">
+            <div class="absolute inset-0 border-t-2 border-b-2 border-rose-500 rounded-full animate-spin [animation-duration:1.2s]"></div>
+            <div class="absolute inset-2 border-r-2 border-l-2 border-yellow-400 rounded-full animate-spin [animation-duration:2.2s] reverse"></div>
+            <i class="fa-solid fa-gavel text-3xl text-rose-500 animate-pulse"></i>
+        </div>
+        
+        <div class="text-center flex flex-col gap-2 max-w-sm">
+            <h1 class="meme-font text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-rose-500 to-amber-400">每日一斬！直到主管發現</h1>
+            <p class="text-[10px] text-rose-400/80 font-mono tracking-widest uppercase">手機相容生存系統初始化...</p>
+            
+            <div class="mt-2 p-3 rounded-xl bg-slate-900 border border-slate-800 text-left text-[10px] font-mono text-gray-400 flex flex-col gap-1.5">
+                <div id="step-1" class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin text-rose-500"></i> 加載反骨精神引擎...</div>
+                <div id="step-2" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[6px]"></i> 整合手機 Safe Area 配置...</div>
+                <div id="step-3" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[6px]"></i> 調試 AR 臉部探測儀...</div>
+            </div>
+
+            <!-- Permission prompt -->
+            <button id="btn-grant-permission" class="mt-4 px-4 py-2.5 bg-rose-600 active:scale-95 rounded-xl text-xs font-black tracking-wider shadow-lg flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-camera"></i> 啟動相機並開始摸魚
+            </button>
+
+            <button id="btn-skip-camera" class="text-[10px] text-gray-500 underline mt-2 hover:text-gray-300">
+                以「全息畫大餅模式 (無相機)」開始遊戲
+            </button>
+        </div>
     </div>
 
     <script>
-        // --- AUDIO SYNTHESIS ENGINE (Using Web Audio API for offline, instant 100% responsive generation) ---
+        // --- MOBILE-LATENCY retro sound generator (Web Audio API) ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -405,235 +346,225 @@
         }
 
         const SoundFX = {
-            playLaser() {
+            playSlash() {
                 initAudio();
-                if (!audioCtx) return;
+                if (!audioCtx || !gameState.soundFX) return;
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(900, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.25);
-                
+                osc.frequency.setValueAtTime(700, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
                 gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.25);
-            },
-            playConfetti() {
-                initAudio();
-                if (!audioCtx) return;
-                // Pop sound
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(140, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.12);
-                
-                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.12);
-            },
-            playWater() {
-                initAudio();
-                if (!audioCtx) return;
-                // Wet squirt splash
-                const bufferSize = audioCtx.sampleRate * 0.15;
-                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) {
-                    data[i] = Math.random() * 2 - 1;
-                }
-                const noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-                
-                const filter = audioCtx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.setValueAtTime(300, audioCtx.currentTime);
-                filter.frequency.exponentialRampToValueAtTime(1100, audioCtx.currentTime + 0.15);
-                
-                const gain = audioCtx.createGain();
-                gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                
-                noise.connect(filter);
-                filter.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                noise.start();
-                noise.stop(audioCtx.currentTime + 0.15);
-            },
-            playLove() {
-                initAudio();
-                if (!audioCtx) return;
-                // High sweet chirp
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(450, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.2);
-                
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.2);
+                osc.stop(audioCtx.currentTime + 0.15);
             },
             playHit() {
                 initAudio();
-                if (!audioCtx) return;
-                // Low meaty bass thump
+                if (!audioCtx || !gameState.soundFX) return;
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(35, audioCtx.currentTime + 0.18);
-                
+                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(45, audioCtx.currentTime + 0.12);
                 gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
-                
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
                 osc.start();
-                osc.stop(audioCtx.currentTime + 0.18);
+                osc.stop(audioCtx.currentTime + 0.12);
             },
-            playLevelUp() {
+            playSqueak() {
                 initAudio();
-                if (!audioCtx) return;
-                // Upward retro chord
-                const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C E G C E
-                notes.forEach((freq, idx) => {
+                if (!audioCtx || !gameState.soundFX) return;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1500, audioCtx.currentTime + 0.08);
+                osc.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            },
+            playAlert() {
+                initAudio();
+                if (!audioCtx || !gameState.soundFX) return;
+                const playBeep = (delay, freq, duration) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
-                    
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
-                    
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08 + 0.08);
-                    gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.2);
-                    
-                    osc.start(audioCtx.currentTime + idx * 0.08);
-                    osc.stop(audioCtx.currentTime + idx * 0.08 + 0.2);
-                });
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + delay);
+                    gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
+                    osc.start(audioCtx.currentTime + delay);
+                    osc.stop(audioCtx.currentTime + delay + duration);
+                };
+                playBeep(0, 880, 0.08);
+                playBeep(0.1, 1050, 0.12);
             },
-            playReload() {
+            playBusted() {
                 initAudio();
-                if (!audioCtx) return;
-                const osc = audioCtx.createOscillator();
+                if (!audioCtx || !gameState.soundFX) return;
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.connect(gain);
+                osc1.connect(gain);
+                osc2.connect(gain);
                 gain.connect(audioCtx.destination);
-                
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.06);
-                
-                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
-                
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.12);
+                osc1.type = 'sawtooth';
+                osc2.type = 'square';
+                osc1.frequency.setValueAtTime(120, audioCtx.currentTime);
+                osc2.frequency.setValueAtTime(122, audioCtx.currentTime);
+                osc1.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.5);
+                osc2.frequency.linearRampToValueAtTime(61, audioCtx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc1.start();
+                osc2.start();
+                osc1.stop(audioCtx.currentTime + 0.5);
+                osc2.stop(audioCtx.currentTime + 0.5);
             }
         };
 
-        // Speech synthesis jokes pool
-        const SpeakPhrases = {
-            hit: [
-                "哎呀！打中你的大腦了，發現全是稻草！",
-                "完美鎖定！你長得實在太有趣了！",
-                "偵測到顏值異常，啟動超級惡搞修正！",
-                "哎呀！目標開始臉紅了！",
-                "太好玩了！這傢伙一臉無辜！",
-                "恭喜！你獲得了被射擊最搞笑獎！",
-                "目標傻笑中，火力全開！"
-            ],
-            levelUp: [
-                "哇！恭喜升級！你已經成為整人界的傳奇特工！",
-                "升級了！解鎖更致命的惡搞戰術，繼續轟炸你眼前的人吧！",
-                "太震撼了！系統判定你為頂級惡搞戰神！"
-            ]
-        };
-
-        function triggerVoiceRoast(type) {
+        function triggerVoiceSlogan() {
             if (!gameState.soundSpeak) return;
             try {
-                window.speechSynthesis.cancel(); // Clear queued speech
-                const pool = SpeakPhrases[type];
-                const phrase = pool[Math.floor(Math.random() * pool.length)];
-                const utterance = new SpeechSynthesisUtterance(phrase);
-                utterance.rate = 1.15;
-                utterance.pitch = 1.25;
+                window.speechSynthesis.cancel();
+                const customText = document.getElementById('custom-slogan').value || "立刻加薪！";
+                const utterance = new SpeechSynthesisUtterance(customText);
+                utterance.rate = 1.3;
+                utterance.pitch = 1.4;
                 window.speechSynthesis.speak(utterance);
             } catch (e) {
-                console.warn("Speech synthesis bypassed.");
+                console.warn("Speech synthesis error.");
             }
         }
     </script>
 
     <script>
-        // --- CORE GAME STATE ---
+        // --- CORE STATE MANAGEMENT ---
         const gameState = {
             score: 0,
-            highScore: parseInt(localStorage.getItem('ar_troll_highscore')) || 0,
-            level: 1,
-            xp: 0,
-            xpNeeded: 100,
-            ammo: 10,
-            maxAmmo: 10,
-            isReloading: false,
-            currentWeapon: 'laser',
-            soundFX: true,
+            combo: 0,
+            comboTimer: null,
+            rank: "實習生",
+            currentWeapon: 'cardboard',
             soundSpeak: true,
+            soundFX: true,
             faceTrackingEnabled: true,
             simTargetsEnabled: true,
-            currentFacingMode: 'environment', // Start with environment (back) camera
-            faces: [], // Tracked raw face coordinates
-            virtualTargets: [], // Floating meme targets
-            particles: [], // visual particles
-            splats: [], // full screen or localized splash elements
+            currentFacingMode: 'user', // Default to 'user' for perfect selfie mirroring prank
+            faces: [],
+            virtualTargets: [],
+            particles: [],
             weaponSwayX: 0,
             weaponSwayY: 0,
-            muzzleFlashActive: false,
+            isChopping: false,
+            weaponHeat: 0,
             cameraStream: null,
             trackingTask: null,
-            lastFrameTime: performance.now()
+            lastFrameTime: performance.now(),
+            
+            // Boss states: 'BACK' (Safe), 'ALERT' (Be Careful), 'LOOKING' (Danger!)
+            bossState: 'BACK',
+            bossStateTimer: 3.5,
+            isBusted: false,
+
+            // Gesture tracking variables
+            touchStartX: 0,
+            touchStartY: 0
         };
 
-        // DOM elements
         const video = document.getElementById('video-feed');
         const canvas = document.getElementById('fx-canvas');
         const ctx = canvas.getContext('2d');
         const container = document.getElementById('game-container');
-        
-        // Weapons specs config
+
         const weaponSpecs = {
-            laser: { color: '#06b6d4', ringColor: 'rgba(6,182,212,0.4)', text: '雷射光學炮', particleCount: 15 },
-            confetti: { color: '#ec4899', ringColor: 'rgba(236,72,153,0.4)', text: '彩帶禮炮', particleCount: 30 },
-            water: { color: '#3b82f6', ringColor: 'rgba(59,130,246,0.4)', text: '超能噴水', particleCount: 20 },
-            love: { color: '#f43f5e', ringColor: 'rgba(244,63,94,0.4)', text: '滿滿愛意', particleCount: 25 }
+            cardboard: { color: '#fb923c', text: '紙板神劍', particleCount: 15 },
+            leek: { color: '#4ade80', text: '整頓大蔥', particleCount: 20 },
+            hammer: { color: '#f43f5e', text: '尖叫神槌', particleCount: 25 }
         };
 
-        // --- CAMERA STREAM INITIATOR ---
-        async function startCamera(facingMode = 'environment') {
+        const slackerRanks = [
+            { min: 0, text: "職場實習生" },
+            { min: 3000, text: "摸魚初學者" },
+            { min: 10000, text: "辦公室游擊隊" },
+            { min: 35000, text: "職場整頓家" },
+            { min: 100000, text: "反骨薪資終結者" }
+        ];
+
+        // Custom weapon dynamic SVG paths for quick switching on mobile
+        const weaponSVGs = {
+            cardboard: `
+                <g id="weapon-cardboard">
+                    <rect x="210" y="210" width="25" height="70" rx="3" transform="rotate(45, 210, 210)" fill="#78350f" stroke="#451a03" stroke-width="2.5"/>
+                    <line x1="215" y1="230" x2="255" y2="190" stroke="#f59e0b" stroke-width="2"/>
+                    <ellipse cx="205" cy="205" rx="16" ry="8" transform="rotate(45, 205, 205)" fill="#1e293b" stroke="#0f172a" stroke-width="2.5"/>
+                    <path d="M200 200 L50 50 L35 65 L170 215 Z" fill="#d97706" stroke="#b45309" stroke-width="2.5"/>
+                    <path d="M190 190 L60 60" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>
+                    <rect x="95" y="95" width="16" height="30" rx="1.5" transform="rotate(15, 95, 95)" fill="#cbd5e1" fill-opacity="0.8"/>
+                    <path d="M50 50 L35 65" stroke="#fef08a" stroke-width="2"/>
+                </g>
+            `,
+            leek: `
+                <g id="weapon-leek">
+                    <!-- The glorious Leek weapon -->
+                    <rect x="195" y="195" width="28" height="65" rx="4" transform="rotate(45, 195, 195)" fill="#ffffff" stroke="#cbd5e1" stroke-width="2.5"/>
+                    <!-- Dark green leaves shooting out -->
+                    <path d="M165 165 L45 45 L35 60 L145 180 Z" fill="#22c55e" stroke="#16a34a" stroke-width="2.5"/>
+                    <path d="M150 150 L25 50 L15 65 L135 165 Z" fill="#15803d" stroke="#166534" stroke-width="2.5"/>
+                    <path d="M170 170 L55 25 L45 35 L155 155 Z" fill="#4ade80" stroke="#22c55e" stroke-width="2.5"/>
+                    <ellipse cx="195" cy="195" rx="14" ry="7" transform="rotate(45, 195, 195)" fill="#86efac" stroke="#22c55e" stroke-width="2"/>
+                    <!-- Comic sparkles -->
+                    <circle cx="80" cy="110" r="5" fill="#fef08a" />
+                    <circle cx="120" cy="70" r="3" fill="#fef08a" />
+                </g>
+            `,
+            hammer: `
+                <g id="weapon-hammer">
+                    <!-- Red Squeaky Hammer -->
+                    <rect x="200" y="200" width="18" height="90" rx="4" transform="rotate(45, 200, 200)" fill="#fbbf24" stroke="#d97706" stroke-width="2.5"/>
+                    <rect x="70" y="70" width="120" height="60" rx="14" transform="rotate(45, 70, 70)" fill="#ef4444" stroke="#b91c1c" stroke-width="2.5"/>
+                    <!-- Squeaky bellows on hammer heads -->
+                    <rect x="135" y="60" width="20" height="40" rx="3" transform="rotate(45, 135, 60)" fill="#fca5a5" stroke="#ef4444" stroke-width="1.5"/>
+                    <rect x="65" y="130" width="20" height="40" rx="3" transform="rotate(45, 65, 130)" fill="#fca5a5" stroke="#ef4444" stroke-width="1.5"/>
+                    <!-- Whimsical star sparkles -->
+                    <path d="M140 180 L145 165 L160 160 L145 155 L140 140 L135 155 L120 160 L135 165 Z" fill="#fbbf24"/>
+                </g>
+            `
+        };
+
+        function selectWeapon(wpnId) {
+            gameState.currentWeapon = wpnId;
+            document.getElementById('weapon-graphics-container').innerHTML = weaponSVGs[wpnId];
+            
+            // Visual indicators update
+            document.querySelectorAll('.wpn-select-btn').forEach(btn => {
+                btn.className = "wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl text-gray-400 border border-transparent text-[10px] font-extrabold transition-all";
+            });
+            
+            const activeBtn = document.getElementById(`wpn-${wpnId}-btn`);
+            activeBtn.className = "wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl bg-rose-600/20 text-rose-400 border border-rose-500/30 text-[10px] font-extrabold transition-all";
+        }
+    </script>
+
+    <script>
+        // --- MOBILE ADAPTIVE CAMERA CONTROLLERS ---
+        async function startCamera(facingMode = 'user') {
             if (gameState.cameraStream) {
                 gameState.cameraStream.getTracks().forEach(track => track.stop());
             }
 
+            // Mobile optimized aspect ratio configurations
             const constraints = {
                 video: {
                     facingMode: facingMode,
@@ -649,79 +580,71 @@
                 video.srcObject = stream;
                 gameState.currentFacingMode = facingMode;
 
-                // Adjust mirror styling depending on front camera
+                // Adjust mirror style depending on active camera orientation
                 if (facingMode === 'user') {
                     video.style.transform = 'scaleX(-1)';
                 } else {
                     video.style.transform = 'none';
                 }
+
+                document.getElementById('fallback-bg').style.opacity = '0';
                 return true;
             } catch (err) {
-                console.warn("webcam rejected or missing, utilizing simulated holo-space:", err);
+                console.warn("Camera streaming blocked. Running in immersive holographic simulator mode.");
+                document.getElementById('fallback-bg').style.opacity = '0.35';
                 return false;
             }
         }
 
-        // --- FACE TRACKING SETUP ---
         function initFaceTracker() {
             if (gameState.trackingTask) {
                 gameState.trackingTask.stop();
             }
 
             const tracker = new tracking.ObjectTracker('face');
-            tracker.setInitialScale(4);
+            tracker.setInitialScale(4.5);
             tracker.setStepSize(2);
-            tracker.setEdgesDensity(0.1);
+            tracker.setEdgesDensity(0.12);
 
-            // Bind to video tracking
             gameState.trackingTask = tracking.track('#video-feed', tracker);
-            
             tracker.on('track', function(event) {
                 if (!gameState.faceTrackingEnabled) {
                     gameState.faces = [];
                     return;
                 }
-                // Save coordinates
                 gameState.faces = event.data;
             });
         }
     </script>
 
     <script>
-        // --- PARTICLE PHYSICS SYSTEM ---
-        class Particle {
-            constructor(x, y, color, vx, vy, size, type = 'physics') {
+        // --- OFFICE COMIC PARTICLES SYSTEM ---
+        class OfficeParticle {
+            constructor(x, y, color, vx, vy, text = '') {
                 this.x = x;
                 this.y = y;
                 this.color = color;
                 this.vx = vx;
                 this.vy = vy;
-                this.size = size;
+                this.text = text;
                 this.alpha = 1;
-                this.type = type; // 'physics', 'confetti', 'heart', 'water'
-                this.rotation = Math.random() * Math.PI * 2;
-                this.rotSpeed = (Math.random() - 0.5) * 0.2;
+                this.size = text ? 12 : 4 + Math.random() * 8;
+                this.life = 1.0;
+                this.rotation = (Math.random() - 0.5) * 0.4;
             }
 
             update(dt) {
                 this.x += this.vx * dt * 60;
                 this.y += this.vy * dt * 60;
                 
-                if (this.type === 'confetti') {
-                    this.vy += 0.2; // Gravity
-                    this.alpha -= 0.015;
-                } else if (this.type === 'water') {
-                    this.vy += 0.3; // High Gravity
-                    this.size += 0.1; // Splat expansion
+                if (this.text) {
+                    this.vy -= 0.15; // float upwards like anger
                     this.alpha -= 0.02;
-                } else if (this.type === 'heart') {
-                    this.vy -= 0.1; // Floats upwards
-                    this.alpha -= 0.012;
                 } else {
-                    this.alpha -= 0.025; // Laser sparks
+                    this.vy += 0.22; // gravity pull for sparks
+                    this.alpha -= 0.035;
                 }
                 
-                this.rotation += this.rotSpeed;
                 return this.alpha > 0;
             }
 
@@ -731,28 +654,19 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation);
 
-                if (this.type === 'heart') {
-                    // Draw mini vector heart
+                if (this.text) {
+                    // Comic action explosion dialogue box
+                    ctx.font = '900 14px "ZCOOL KuaiLe", sans-serif';
+                    ctx.textAlign = 'center';
+                    
+                    // Dark frame border
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(this.text, 2, 2);
+                    
                     ctx.fillStyle = this.color;
-                    ctx.beginPath();
-                    ctx.moveTo(0, this.size / 4);
-                    ctx.bezierCurveTo(this.size / 2, -this.size / 2, this.size * 1.2, this.size / 3, 0, this.size);
-                    ctx.bezierCurveTo(-this.size * 1.2, this.size / 3, -this.size / 2, -this.size / 2, 0, this.size / 4);
-                    ctx.fill();
-                } else if (this.type === 'confetti') {
-                    // Multi shape colorful squares
-                    ctx.fillStyle = this.color;
-                    ctx.fillRect(-this.size/2, -this.size/2, this.size, this.size);
-                } else if (this.type === 'water') {
-                    // Soft blue splash bubbles
-                    ctx.fillStyle = 'rgba(59, 130, 246, 0.7)';
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.fillText(this.text, 0, 0);
                 } else {
-                    // Spark glow circle
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = this.color;
+                    // Exploding colorful dots
                     ctx.fillStyle = this.color;
                     ctx.beginPath();
                     ctx.arc(0, 0, this.size, 0, Math.PI * 2);
@@ -762,169 +676,83 @@
             }
         }
 
-        // --- SPLAT OVERLAYS (Water drips / Screen Splats) ---
-        class ScreenSplat {
-            constructor(x, y, type) {
-                this.x = x;
-                this.y = y;
-                this.type = type;
-                this.alpha = 1.0;
-                this.size = 50 + Math.random() * 60;
-                this.dripY = 0;
-            }
+        // --- Corporate KPI & Overwork Targets ---
+        const officeEmojis = ['📊', '📈', '📄', '⏰', '💼', '📧'];
+        const officeLabels = ['週報 PPT', 'KPI 指標', '打卡報表', '加班申請', '畫大餅'];
 
-            update(dt) {
-                if (this.type === 'water') {
-                    this.dripY += 0.5; // Drips down screen
-                    this.alpha -= 0.003;
-                } else {
-                    this.alpha -= 0.01;
-                }
-                return this.alpha > 0;
-            }
-
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                if (this.type === 'water') {
-                    // Realistic splash vector blob
-                    ctx.fillStyle = 'rgba(59, 130, 246, 0.45)';
-                    ctx.shadowBlur = 5;
-                    ctx.shadowColor = '#3b82f6';
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y + this.dripY, this.size, 0, Math.PI*2);
-                    ctx.arc(this.x - this.size * 0.4, this.y + this.dripY + this.size * 0.3, this.size * 0.5, 0, Math.PI*2);
-                    ctx.arc(this.x + this.size * 0.5, this.y + this.dripY - this.size * 0.2, this.size * 0.4, 0, Math.PI*2);
-                    ctx.fill();
-                }
-                ctx.restore();
-            }
-        }
-
-        // --- VIRTUAL MEME TARGETS (Holographic simulator targets) ---
-        const memeEmojis = ['🤡', '👽', '👻', '💩', '🤪', '👹', '🦧', '🤖'];
-        class VirtualTarget {
+        class OfficeTarget {
             constructor(w, h) {
-                this.x = Math.random() * (w - 100) + 50;
-                this.y = Math.random() * (h - 200) + 50;
-                this.vx = (Math.random() - 0.5) * 5;
-                this.vy = (Math.random() - 0.5) * 5;
-                this.emoji = memeEmojis[Math.floor(Math.random() * memeEmojis.length)];
-                this.size = 65;
+                this.x = Math.random() * (w - 80) + 40;
+                this.y = Math.random() * (h - 220) + 120;
+                this.vx = (Math.random() - 0.5) * 2.5;
+                this.vy = (Math.random() - 0.5) * 2.5;
+                this.emoji = officeEmojis[Math.floor(Math.random() * officeEmojis.length)];
+                this.text = officeLabels[Math.floor(Math.random() * officeLabels.length)];
+                this.size = 48;
                 this.hp = 100;
-                this.maxHp = 100;
             }
 
             update(w, h, dt) {
                 this.x += this.vx * dt * 60;
                 this.y += this.vy * dt * 60;
 
-                // Bounce boundaries
                 if (this.x < 30 || this.x > w - 30) this.vx *= -1;
-                if (this.y < 30 || this.y > h - 180) this.vy *= -1;
+                if (this.y < 120 || this.y > h - 180) this.vy *= -1;
             }
 
             draw() {
-                // Drawing sci-fi scan bracket around virtual targets
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                
-                // Pulsing outer bracket
-                const pulse = Math.sin(performance.now() * 0.01) * 5;
-                ctx.strokeStyle = '#ec4899';
+
+                // Holographic brackets surrounding
+                ctx.strokeStyle = 'rgba(244, 63, 94, 0.5)';
                 ctx.lineWidth = 1.5;
-                ctx.strokeRect(-this.size/2 - 10 - pulse, -this.size/2 - 10 - pulse, this.size + 20 + pulse * 2, this.size + 20 + pulse * 2);
+                ctx.strokeRect(-this.size/2 - 4, -this.size/2 - 4, this.size + 8, this.size + 8);
 
-                // Small HP bar
-                ctx.fillStyle = '#1e293b';
-                ctx.fillRect(-this.size/2, -this.size/2 - 25, this.size, 5);
-                ctx.fillStyle = '#ec4899';
-                ctx.fillRect(-this.size/2, -this.size/2 - 25, this.size * (this.hp / this.maxHp), 5);
+                // HP indicator bar
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(-this.size/2, -this.size/2 - 14, this.size, 4);
+                ctx.fillStyle = '#f43f5e';
+                ctx.fillRect(-this.size/2, -this.size/2 - 14, this.size * (this.hp / 100), 4);
 
-                // Emoji rendering
-                ctx.font = `${this.size}px Arial`;
+                // Label
+                ctx.font = 'bold 9px "ZCOOL KuaiLe", sans-serif';
+                ctx.fillStyle = '#fbcfe8';
+                ctx.textAlign = 'center';
+                ctx.fillText(this.text, 0, this.size / 2 + 10);
+
+                // Emoji
+                ctx.font = `${this.size - 12}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(this.emoji, 0, 0);
-                ctx.restore();
-            }
-        }
 
-        // --- COMIC FLOATING TEXT WORDS (POW! BAM! Insults) ---
-        class ComicCallout {
-            constructor(x, y, text, color) {
-                this.x = x;
-                this.y = y;
-                this.text = text;
-                this.color = color;
-                this.scale = 0.5;
-                this.alpha = 1;
-                this.vy = -3;
-                this.vx = (Math.random() - 0.5) * 4;
-            }
-
-            update(dt) {
-                this.x += this.vx * dt * 60;
-                this.y += this.vy * dt * 60;
-                this.scale += 0.08;
-                this.alpha -= 0.02;
-                return this.alpha > 0;
-            }
-
-            draw() {
-                ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.translate(this.x, this.y);
-                ctx.scale(Math.min(this.scale, 1.5), Math.min(this.scale, 1.5));
-                
-                // Draw cool angled comic balloon background
-                ctx.fillStyle = '#eab308'; // Yellow badge
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 3;
-                
-                ctx.font = '900 24px "Orbitron", "Inter", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const metrics = ctx.measureText(this.text);
-                const rectW = metrics.width + 24;
-                const rectH = 38;
-
-                ctx.beginPath();
-                ctx.roundRect(-rectW/2, -rectH/2, rectW, rectH, 10);
-                ctx.fill();
-                ctx.stroke();
-
-                // Text
-                ctx.fillStyle = '#000000';
-                ctx.fillText(this.text, 0, 0);
                 ctx.restore();
             }
         }
     </script>
 
     <script>
-        // --- DRAWING REAL-TIME AR HUD OVERLAYS ---
-        function coordinateMapping(rx, ry, rw, rh) {
-            // Converts raw 640x480 tracking.js dimensions to fit full container aspect ratio (cover mode)
-            const videoW = 320; // Default tracker binding width
-            const videoH = 240; // Default tracker binding height
+        // Adjust tracker coordinates to perfectly fit HTML5 overlay canvas size
+        function getCanvasSpaceCoords(rx, ry, rw, rh) {
+            const trackerW = 320;
+            const trackerH = 240;
             const canvasW = canvas.width;
             const canvasH = canvas.height;
 
-            const videoRatio = videoW / videoH;
+            const videoRatio = trackerW / trackerH;
             const canvasRatio = canvasW / canvasH;
 
             let scale, xOffset = 0, yOffset = 0;
 
             if (canvasRatio > videoRatio) {
-                scale = canvasW / videoW;
-                yOffset = (canvasH - videoH * scale) / 2;
+                scale = canvasW / trackerW;
+                yOffset = (canvasH - trackerH * scale) / 2;
             } else {
-                scale = canvasH / videoH;
-                xOffset = (canvasW - videoW * scale) / 2;
+                scale = canvasH / trackerH;
+                xOffset = (canvasW - trackerW * scale) / 2;
             }
 
-            // Mirror horizontally if using user (selfie) camera
             let finalX = rx * scale + xOffset;
             if (gameState.currentFacingMode === 'user') {
                 finalX = canvasW - (finalX + rw * scale);
@@ -938,103 +766,102 @@
             };
         }
 
-        function drawFaceDecorations(mapped, faceIdx) {
-            const wpn = gameState.currentWeapon;
+        // Draw stickers / comedy accessories on face bounds
+        function drawFaceARStickers(mapped, index) {
             const px = mapped.x + mapped.w / 2;
             const py = mapped.y + mapped.h / 2;
-            
+
             ctx.save();
-            
-            // Neon lock bracket around real faces
-            ctx.strokeStyle = weaponSpecs[wpn].color;
-            ctx.lineWidth = 3;
-            ctx.shadowBlur = 10;
-            ctx.shadowColor = weaponSpecs[wpn].color;
-            
-            // Draw stylized futuristic frame
-            ctx.beginPath();
-            const cornerSize = Math.min(mapped.w, mapped.h) * 0.25;
-            // Top Left
-            ctx.moveTo(mapped.x, mapped.y + cornerSize);
-            ctx.lineTo(mapped.x, mapped.y);
-            ctx.lineTo(mapped.x + cornerSize, mapped.y);
-            // Top Right
-            ctx.moveTo(mapped.x + mapped.w - cornerSize, mapped.y);
-            ctx.lineTo(mapped.x + mapped.w, mapped.y);
-            ctx.lineTo(mapped.x + mapped.w, mapped.y + cornerSize);
-            // Bottom Left
-            ctx.moveTo(mapped.x, mapped.y + mapped.h - cornerSize);
-            ctx.lineTo(mapped.x, mapped.y + mapped.h);
-            ctx.lineTo(mapped.x + cornerSize, mapped.y + mapped.h);
-            // Bottom Right
-            ctx.moveTo(mapped.x + mapped.w - cornerSize, mapped.y + mapped.h);
-            ctx.lineTo(mapped.x + mapped.w, mapped.y + mapped.h);
-            ctx.lineTo(mapped.x + mapped.w, mapped.y + mapped.h - cornerSize);
-            ctx.stroke();
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 2.5;
+            ctx.strokeRect(mapped.x, mapped.y, mapped.w, mapped.h);
 
-            // Label
+            // Red warning text
             ctx.font = '900 10px "Orbitron", sans-serif';
-            ctx.fillStyle = weaponSpecs[wpn].color;
-            ctx.fillText(`VICTIM_LOCK_${faceIdx + 1}`, mapped.x, mapped.y - 10);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`🚨 DETECTED_BOSS_${index+1}`, mapped.x, mapped.y - 10);
+            ctx.restore();
 
-            // TROLL OVERLAYS based on weapon selected
-            ctx.shadowBlur = 0; // Reset shadow for cleaner rendering
-            if (wpn === 'laser') {
-                // Glow Laser Glasses
-                ctx.font = `${mapped.w * 0.65}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('😎', px, py - mapped.h * 0.05);
-                
-                // Draw custom neon beams
-                ctx.strokeStyle = '#f43f5e';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(px - mapped.w * 0.15, py - mapped.h * 0.05);
-                ctx.lineTo(px - mapped.w * 0.4, py + mapped.h * 0.3);
-                ctx.moveTo(px + mapped.w * 0.15, py - mapped.h * 0.05);
-                ctx.lineTo(px + mapped.w * 0.4, py + mapped.h * 0.3);
-                ctx.stroke();
+            // Place hilarious stickers on colleague faces dynamically
+            ctx.save();
+            ctx.font = `${mapped.w * 0.45}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-            } else if (wpn === 'confetti') {
-                // Clown Wig and Red Nose overlay
-                ctx.font = `${mapped.w * 1.1}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🤡', px, py - mapped.h * 0.02);
-
-            } else if (wpn === 'water') {
-                // Scuba Goggles
-                ctx.font = `${mapped.w * 0.9}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🤿', px, py - mapped.h * 0.08);
-
-            } else if (wpn === 'love') {
-                // Blushing anime hearts cheeks
-                ctx.font = `${mapped.w * 0.5}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                // Cheek left
-                ctx.fillText('💖', px - mapped.w * 0.25, py + mapped.h * 0.08);
-                // Cheek right
-                ctx.fillText('💖', px + mapped.w * 0.25, py + mapped.h * 0.08);
-                // Floating crown of hearts
-                ctx.font = `${mapped.w * 0.6}px Arial`;
-                ctx.fillText('🥰', px, py - mapped.h * 0.55);
+            if (gameState.currentWeapon === 'cardboard') {
+                // Classic ninja face shield
+                ctx.fillText('🥷', px, py - mapped.h * 0.5);
+            } else if (gameState.currentWeapon === 'leek') {
+                // Slicing master chef hat
+                ctx.fillText('👨‍🍳', px, py - mapped.h * 0.55);
+            } else if (gameState.currentWeapon === 'hammer') {
+                // Vertigo dizziness stars
+                ctx.fillText('💫', px, py - mapped.h * 0.45);
             }
-            
             ctx.restore();
         }
     </script>
 
     <script>
-        // --- CORE GAME LOOP ---
-        function runMainLoop(timestamp) {
+        // --- BOSS AI & WARNING ALERTS ---
+        function handleBossTick(dt) {
+            if (gameState.isBusted) return;
+
+            gameState.bossStateTimer -= dt;
+            if (gameState.bossStateTimer <= 0) {
+                const nextStateChoices = ['BACK', 'ALERT', 'LOOKING'];
+                let next = 'BACK';
+
+                if (gameState.bossState === 'BACK') {
+                    next = 'ALERT';
+                    gameState.bossStateTimer = 1.0 + Math.random() * 0.7;
+                    if (gameState.soundFX) SoundFX.playAlert();
+                } else if (gameState.bossState === 'ALERT') {
+                    next = 'LOOKING';
+                    gameState.bossStateTimer = 1.5 + Math.random() * 1.5;
+                } else {
+                    next = 'BACK';
+                    gameState.bossStateTimer = 3.0 + Math.random() * 3.0;
+                }
+
+                gameState.bossState = next;
+                updateBossHUD();
+            }
+        }
+
+        function updateBossHUD() {
+            const txt = document.getElementById('boss-status-text');
+            const dot = document.getElementById('boss-light-dot');
+            const ping = document.getElementById('boss-light-ping');
+            const hud = document.getElementById('boss-hud');
+
+            if (gameState.bossState === 'BACK') {
+                txt.innerText = "背對著你 (安全)";
+                txt.className = "text-xs font-black text-green-400 meme-font";
+                dot.className = "relative inline-flex rounded-full h-4 w-4 bg-green-500";
+                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75";
+                hud.style.borderColor = 'rgba(74, 222, 128, 0.4)';
+            } else if (gameState.bossState === 'ALERT') {
+                txt.innerText = "主管懷疑有聲音！";
+                txt.className = "text-xs font-black text-amber-400 meme-font";
+                dot.className = "relative inline-flex rounded-full h-4 w-4 bg-amber-500";
+                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75";
+                hud.style.borderColor = 'rgba(251, 146, 60, 0.4)';
+            } else {
+                txt.innerText = "突然轉身直視！(危險)";
+                txt.className = "text-xs font-black text-red-500 meme-font";
+                dot.className = "relative inline-flex rounded-full h-4 w-4 bg-red-600";
+                ping.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75";
+                hud.style.borderColor = 'rgba(239, 68, 68, 0.6)';
+            }
+        }
+
+        // --- MAIN CANVAS RENDERING LOOP ---
+        function mainLoop(timestamp) {
             const dt = Math.min((timestamp - gameState.lastFrameTime) / 1000, 0.1);
             gameState.lastFrameTime = timestamp;
 
-            // Handle canvas sizing dynamically
+            // Fit full width/height matching device dynamic sizes
             if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
                 canvas.width = container.clientWidth;
                 canvas.height = container.clientHeight;
@@ -1042,11 +869,13 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // 1. Process Virtual Targets (Bounce & Render)
+            // Tick alert logics
+            handleBossTick(dt);
+
+            // Update virtual office floating targets
             if (gameState.simTargetsEnabled) {
-                // Spawn one if empty
                 if (gameState.virtualTargets.length < 2) {
-                    gameState.virtualTargets.push(new VirtualTarget(canvas.width, canvas.height));
+                    gameState.virtualTargets.push(new OfficeTarget(canvas.width, canvas.height));
                 }
                 gameState.virtualTargets.forEach(target => {
                     target.update(canvas.width, canvas.height, dt);
@@ -1054,497 +883,369 @@
                 });
             }
 
-            // 2. Draw Real-Life Face Overlays
-            let centerMatched = false;
-            let currentTargetName = "SCANNING";
+            // Real-time tracking overlay alignment check
+            let targetAcquired = false;
             const crossX = canvas.width / 2;
             const crossY = canvas.height / 2;
 
             if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
-                gameState.faces.forEach((face, idx) => {
-                    const mapped = coordinateMapping(face.x, face.y, face.width, face.height);
-                    drawFaceDecorations(mapped, idx);
+                gameState.faces.forEach((face, index) => {
+                    const mapped = getCanvasSpaceCoords(face.x, face.y, face.width, face.height);
+                    drawFaceARStickers(mapped, index);
 
-                    // Check lock-on condition (is face centered)
                     if (crossX >= mapped.x && crossX <= mapped.x + mapped.w &&
                         crossY >= mapped.y && crossY <= mapped.y + mapped.h) {
-                        centerMatched = true;
-                        currentTargetName = `VICTIM_${idx + 1}`;
+                        targetAcquired = true;
                     }
                 });
             }
 
-            // 3. Draw Laser projectile lines during fire
-            if (gameState.muzzleFlashActive) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.strokeStyle = weaponSpecs[gameState.currentWeapon].color;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = weaponSpecs[gameState.currentWeapon].color;
-                
-                if (gameState.currentWeapon === 'laser') {
-                    ctx.lineWidth = 10;
-                    ctx.moveTo(canvas.width * 0.85, canvas.height * 0.9);
-                    ctx.lineTo(crossX, crossY);
-                } else if (gameState.currentWeapon === 'love') {
-                    ctx.lineWidth = 4;
-                    ctx.moveTo(canvas.width * 0.85, canvas.height * 0.9);
-                    ctx.lineTo(crossX, crossY);
-                }
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            // 4. Update and Draw Particles
-            gameState.particles = gameState.particles.filter(p => {
-                const alive = p.update(dt);
-                if (alive) p.draw();
-                return alive;
-            });
-
-            // 5. Update and Draw Splats
-            gameState.splats = gameState.splats.filter(s => {
-                const alive = s.update(dt);
-                if (alive) s.draw();
-                return alive;
-            });
-
-            // 6. Update and Draw Comic Text Callouts
-            gameState.splats = gameState.splats.concat(
-                gameState.splats.filter(s => s instanceof ComicCallout)
-            );
-            
-            // We can draw ComicCallouts separately to make sure they are on top
-            gameState.particles.forEach(p => {
-                if (p instanceof ComicCallout) {
-                    p.update(dt);
-                    p.draw();
-                }
-            });
-
-            // 7. Update HUD Crosshair indicators
-            const ring = document.getElementById('target-lock-ring');
-            const distTxt = document.getElementById('target-dist');
-            if (centerMatched) {
-                ring.style.transform = 'scale(1.2)';
-                ring.style.borderColor = '#f43f5e'; // Warning red
-                distTxt.innerText = "LOCKED_MAX";
-                distTxt.classList.add('text-rose-500');
-            } else {
-                ring.style.transform = 'scale(0.85)';
-                ring.style.borderColor = weaponSpecs[gameState.currentWeapon].color;
-                distTxt.innerText = "STANDBY";
-                distTxt.classList.remove('text-rose-500');
-            }
-
-            // Settle muzzle flash opacity
-            if (gameState.muzzleFlashActive) {
-                const flash = document.getElementById('muzzle-flash');
-                flash.style.opacity = '1';
-                flash.style.transform = 'scale(1.5) rotate(' + (Math.random()*360) + 'deg)';
-                setTimeout(() => {
-                    flash.style.opacity = '0';
-                    gameState.muzzleFlashActive = false;
-                }, 50);
-            }
-
-            // Decay weapon recoil displacement
-            gameState.weaponSwayX *= 0.88;
-            gameState.weaponSwayY *= 0.88;
-            document.getElementById('weapon-holder').style.transform = `translate(${gameState.weaponSwayX + 16}px, ${gameState.weaponSwayY + 32}px)`;
-
-            requestAnimationFrame(runMainLoop);
-        }
-
-        // --- SHOOT/FIRE INTERACTION MECHANIC ---
-        function fireWeapon() {
-            if (gameState.isReloading) return;
-            
-            if (gameState.ammo <= 0) {
-                triggerReload();
-                return;
-            }
-
-            // Subtract Ammo
-            gameState.ammo--;
-            updateAmmoHUD();
-
-            // Set Recoil & flash active
-            gameState.weaponSwayY = 55; // Sudden recoil kick up
-            gameState.weaponSwayX = (Math.random() - 0.5) * 30; // Side shake
-            gameState.muzzleFlashActive = true;
-
-            // Trigger firing sound
-            if (gameState.soundFX) {
-                if (gameState.currentWeapon === 'laser') SoundFX.playLaser();
-                if (gameState.currentWeapon === 'confetti') SoundFX.playConfetti();
-                if (gameState.currentWeapon === 'water') SoundFX.playWater();
-                if (gameState.currentWeapon === 'love') SoundFX.playLove();
-            }
-
-            // Set Screen Shake visual cue
-            const container = document.getElementById('game-container');
-            container.classList.add('shake-active');
-            setTimeout(() => container.classList.remove('shake-active'), 200);
-
-            // Check Hit target inside center of screen crosshair
-            const crossX = canvas.width / 2;
-            const crossY = canvas.height / 2;
-            let targetHit = false;
-
-            // Check A: Real Camera Face targets
-            if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
-                for (let i = 0; i < gameState.faces.length; i++) {
-                    const face = gameState.faces[i];
-                    const mapped = coordinateMapping(face.x, face.y, face.width, face.height);
-                    
-                    if (crossX >= mapped.x && crossX <= mapped.x + mapped.w &&
-                        crossY >= mapped.y && crossY <= mapped.y + mapped.h) {
-                        
-                        targetHit = true;
-                        handleTargetScore(mapped.x + mapped.w / 2, mapped.y + mapped.h / 2, `VICTIM_${i+1}`);
-                        break;
-                    }
-                }
-            }
-
-            // Check B: Virtual targets bouncing
-            if (!targetHit && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
-                for (let i = gameState.virtualTargets.length - 1; i >= 0; i--) {
-                    const target = gameState.virtualTargets[i];
+            // Lock on target feedback
+            if (!targetAcquired && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
+                gameState.virtualTargets.forEach(target => {
                     const dist = Math.hypot(crossX - target.x, crossY - target.y);
                     if (dist < target.size) {
-                        targetHit = true;
-                        target.hp -= 34; // 3 shots to kill
-                        
-                        if (target.hp <= 0) {
-                            // Destroy target fully
-                            handleTargetScore(target.x, target.y, `HOLOTROLL_${target.emoji}`);
-                            gameState.virtualTargets.splice(i, 1);
-                        } else {
-                            // Show minor impact score / sparks
-                            handleTargetScore(target.x, target.y, "HIT!", false);
-                        }
-                        break;
+                        targetAcquired = true;
                     }
-                }
+                });
             }
 
-            // Spawn muzzle exhaust particles
-            spawnMuzzleParticles();
-        }
-
-        // --- SCORE & TROLL HIT HANDLER ---
-        function handleTargetScore(tx, ty, victimName, isFatal = true) {
-            // Trigger Hit impacts
-            if (gameState.soundFX) SoundFX.playHit();
-
-            // Spawn weapon specific explosion particles
-            const count = weaponSpecs[gameState.currentWeapon].particleCount;
-            const col = weaponSpecs[gameState.currentWeapon].color;
-            const type = gameState.currentWeapon;
-
-            for (let i = 0; i < count; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = 2 + Math.random() * 8;
-                gameState.particles.push(new Particle(
-                    tx, ty, col,
-                    Math.cos(angle) * speed, Math.sin(angle) * speed,
-                    4 + Math.random() * 8, type
-                ));
-            }
-
-            if (!isFatal) return; // Exit early if just structural hit
-
-            // Splash Water on Screen
-            if (gameState.currentWeapon === 'water') {
-                gameState.splats.push(new ScreenSplat(
-                    Math.random() * canvas.width, Math.random() * canvas.height, 'water'
-                ));
-            }
-
-            // Update scores
-            const pointsGained = 150 + Math.floor(Math.random() * 100);
-            gameState.score += pointsGained;
-            document.getElementById('score-display').innerText = String(gameState.score).padStart(6, '0');
-            document.getElementById('board-you-score').innerText = `${gameState.score}分`;
-
-            // Custom user text popup
-            const customInsultText = document.getElementById('custom-insult-input').value || "大笨蛋!!";
-            gameState.particles.push(new ComicCallout(tx, ty - 40, customInsultText, '#eab308'));
-
-            // Voice roast
-            triggerVoiceRoast('hit');
-
-            // Handle Rank Level progress
-            gameState.xp += pointsGained;
-            if (gameState.xp >= gameState.xpNeeded) {
-                triggerLevelUp();
+            const ring = document.getElementById('crosshair-system');
+            const feedbackText = document.getElementById('target-feedback');
+            if (targetAcquired) {
+                ring.style.transform = 'scale(1.15)';
+                ring.style.borderColor = '#f43f5e';
+                feedbackText.innerText = "鎖定目標!";
+                feedbackText.className = "text-yellow-400 font-extrabold animate-pulse";
             } else {
-                updateProgressHUD();
+                ring.style.transform = 'scale(1.0)';
+                ring.style.borderColor = 'rgba(251, 146, 60, 0.4)';
+                feedbackText.innerText = "未進入範圍";
+                feedbackText.className = "text-white/80";
             }
-        }
 
-        // --- LEVEL UP HANDLER ---
-        const levelBadges = [
-            "整人少將 (Troll Rookie)",
-            "中二狙擊手 (Prank Sniper)",
-            "真人收割者 (Human Disruptor)",
-            "戰術整人特工 (Tactical Jester)",
-            "究極惡搞大魔王 (Grandmaster Troll)"
-        ];
-
-        function triggerLevelUp() {
-            gameState.level++;
-            gameState.xp -= gameState.xpNeeded;
-            gameState.xpNeeded = Math.floor(gameState.xpNeeded * 1.5);
-            
-            // Audio cue
-            if (gameState.soundFX) SoundFX.playLevelUp();
-            triggerVoiceRoast('levelUp');
-
-            // Show screen layout splash popup
-            const splash = document.getElementById('level-up-splash');
-            const badge = document.getElementById('level-badge');
-            
-            badge.innerText = levelBadges[Math.min(gameState.level - 1, levelBadges.length - 1)];
-            document.getElementById('level-display').innerText = `LV.${String(gameState.level).padStart(2, '0')}`;
-            
-            splash.classList.remove('hidden');
-            setTimeout(() => {
-                splash.classList.remove('opacity-0');
-            }, 50);
-
-            updateProgressHUD();
-        }
-
-        function dismissLevelUp() {
-            const splash = document.getElementById('level-up-splash');
-            splash.classList.add('hidden');
-        }
-
-        // --- UTILITY AMMO & HUD UPDATE LOOPS ---
-        function updateAmmoHUD() {
-            document.getElementById('ammo-count').innerText = gameState.ammo;
-            const bars = document.querySelectorAll('.ammo-bar');
-            bars.forEach((bar, idx) => {
-                if (idx < gameState.ammo) {
-                    bar.style.opacity = '1';
-                } else {
-                    bar.style.opacity = '0.1';
-                }
-            });
-        }
-
-        function triggerReload() {
-            if (gameState.isReloading) return;
-            gameState.isReloading = true;
-            if (gameState.soundFX) SoundFX.playReload();
-
-            const text = document.getElementById('target-dist');
-            text.innerText = "RELOADING...";
-            text.classList.add('text-yellow-400');
-
-            const bat = document.getElementById('battery-level');
-            bat.style.width = '0%';
-
-            setTimeout(() => {
-                gameState.ammo = gameState.maxAmmo;
-                updateAmmoHUD();
-                gameState.isReloading = false;
-                text.innerText = "STANDBY";
-                text.classList.remove('text-yellow-400');
-                bat.style.width = '100%';
-            }, 1200);
-        }
-
-        function updateProgressHUD() {
-            const ratio = (gameState.xp / gameState.xpNeeded) * 100;
-            document.getElementById('xp-bar').style.width = `${ratio}%`;
-            document.getElementById('xp-text').innerText = `${gameState.xp} / ${gameState.xpNeeded}`;
-        }
-
-        function spawnMuzzleParticles() {
-            const crossX = canvas.width / 2;
-            const crossY = canvas.height / 2;
-            const gunX = canvas.width * 0.85;
-            const gunY = canvas.height * 0.9;
-            const col = weaponSpecs[gameState.currentWeapon].color;
-
-            // Spawn smoke/spark exhaust near gun nozzle
-            for (let i = 0; i < 8; i++) {
-                gameState.particles.push(new Particle(
-                    gunX - 50, gunY - 50, col,
-                    -1 - Math.random() * 3, -1 - Math.random() * 3,
-                    5 + Math.random() * 5, 'physics'
-                ));
-            }
-        }
-
-        // --- WEAPON SELECTOR UTILITY ---
-        function selectWeapon(wpnId) {
-            gameState.currentWeapon = wpnId;
-            
-            // Adjust glowing stripe styling on Blaster SVG
-            const colors = {
-                laser: '#22d3ee',
-                confetti: '#ec4899',
-                water: '#3b82f6',
-                love: '#f43f5e'
-            };
-            document.getElementById('weapon-stripe').setAttribute('fill', colors[wpnId]);
-
-            // Update selector highlights
-            document.querySelectorAll('.wpn-btn').forEach(btn => {
-                btn.className = "wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border border-transparent text-gray-400 font-semibold hover:text-pink-400 transition-all duration-200";
+            // Render comic impact particles
+            gameState.particles = gameState.particles.filter(p => {
+                const isAlive = p.update(dt);
+                if (isAlive) p.draw();
+                return isAlive;
             });
 
-            const activeBtn = document.getElementById(`wpn-${wpnId}`);
-            activeBtn.className = `wpn-btn flex flex-col items-center justify-center w-20 py-2 rounded-full border-2 border-[${colors[wpnId]}] bg-[${colors[wpnId]}]/10 text-white font-bold transition-all duration-200`;
-            
-            if (gameState.soundFX) SoundFX.playReload();
+            // Restore weapon kickback position
+            gameState.weaponSwayX *= 0.8;
+            gameState.weaponSwayY *= 0.8;
+            document.getElementById('weapon-holder').style.transform = `translate(${gameState.weaponSwayX}px, ${gameState.weaponSwayY}px)`;
+
+            // Settle heat recovery
+            gameState.weaponHeat = Math.max(0, gameState.weaponHeat - dt * 30);
+            document.getElementById('weapon-heat-bar').style.width = `${gameState.weaponHeat}%`;
+
+            requestAnimationFrame(mainLoop);
         }
     </script>
 
     <script>
-        // --- CONTROLS & INTERACTIVE EVENT LISTENERS ---
-        window.addEventListener('load', async () => {
-            // STEP 1: Load configurations & verify permissions
-            document.getElementById('init-step-1').innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i> <span class="text-green-400">惡搞物理引擎加載成功！</span>';
-            document.getElementById('init-step-2').classList.remove('opacity-30');
-            document.getElementById('init-step-2').innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i> <span class="text-green-400">聲效調頻核心就緒。</span>';
-            document.getElementById('init-step-3').classList.remove('opacity-30');
+        // --- CHOP TRIGGER & HIT SYSTEM ---
+        function performChopAction(eventX = null, eventY = null) {
+            if (gameState.isBusted) return;
 
-            // Start Back-Camera by default
-            const hasCam = await startCamera('environment');
-            if (hasCam) {
-                initFaceTracker();
-                document.getElementById('init-step-3').innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i> <span class="text-green-400">AR 面部雷達探測器在線！</span>';
-            } else {
-                document.getElementById('init-step-3').innerHTML = '<i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> <span class="text-yellow-400">雷達離線，全息模擬補償啟動！</span>';
+            // Prevent tapping if weapon is overloaded
+            if (gameState.weaponHeat >= 100) {
+                document.getElementById('weapon-status').innerText = "過熱中!";
+                return;
             }
 
-            // Remove loading screen on ready
-            setTimeout(() => {
-                const overlay = document.getElementById('loading-overlay');
-                overlay.style.opacity = '0';
-                setTimeout(() => overlay.style.display = 'none', 500);
-            }, 1000);
+            gameState.weaponHeat = Math.min(100, gameState.weaponHeat + 35);
+            if (gameState.weaponHeat >= 90) {
+                setTimeout(() => {
+                    document.getElementById('weapon-status').innerText = "可揮斬";
+                }, 1000);
+            }
 
-            // Start Core Animation Game Loop
-            requestAnimationFrame(runMainLoop);
-        });
+            // Animate weapon swing
+            const weaponSvg = document.getElementById('weapon-svg');
+            weaponSvg.classList.remove('chop-animation');
+            void weaponSvg.offsetWidth;
+            weaponSvg.classList.add('chop-animation');
 
-        // 1. Shooter Firing Clicks
-        document.getElementById('btn-shoot').addEventListener('click', (e) => {
-            e.stopPropagation();
-            fireWeapon();
-        });
+            // Sound FX Choice
+            if (gameState.currentWeapon === 'hammer') {
+                SoundFX.playSqueak();
+            } else {
+                SoundFX.playSlash();
+            }
 
-        // Support direct touch/click on viewports to fire at exact spot (Tactile fun!)
-        canvas.addEventListener('mousedown', (e) => {
-            // Tap to shoot coordinates
-            const x = e.clientX;
-            const y = e.clientY;
-            
-            // Generate visual laser line straight to click spot
-            gameState.weaponSwayY = 30;
-            gameState.muzzleFlashActive = true;
-            
-            // Check Hit logic for this specific click
-            let targetHit = false;
+            gameState.weaponSwayX = -25;
+            gameState.weaponSwayY = 20;
+
+            // Check if Boss caught you
+            if (gameState.bossState === 'LOOKING') {
+                triggerBustedAndCaught();
+                return;
+            }
+
+            // Verify coordinates hit
+            const clickX = eventX || (canvas.width / 2);
+            const clickY = eventY || (canvas.height / 2);
+            let hitRegistered = false;
 
             if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
                 for (let i = 0; i < gameState.faces.length; i++) {
                     const face = gameState.faces[i];
-                    const mapped = coordinateMapping(face.x, face.y, face.width, face.height);
-                    if (x >= mapped.x && x <= mapped.x + mapped.w &&
-                        y >= mapped.y && y <= mapped.y + mapped.h) {
-                        targetHit = true;
-                        handleTargetScore(x, y, `VICTIM_${i+1}`);
+                    const mapped = getCanvasSpaceCoords(face.x, face.y, face.width, face.height);
+                    if (clickX >= mapped.x && clickX <= mapped.x + mapped.w &&
+                        clickY >= mapped.y && clickY <= mapped.y + mapped.h) {
+                        
+                        hitRegistered = true;
+                        handleTargetSlapped(clickX, clickY, `整頓成功！`);
                         break;
                     }
                 }
             }
 
-            if (!targetHit && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
+            if (!hitRegistered && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
                 for (let i = gameState.virtualTargets.length - 1; i >= 0; i--) {
                     const target = gameState.virtualTargets[i];
-                    const dist = Math.hypot(x - target.x, y - target.y);
+                    const dist = Math.hypot(clickX - target.x, clickY - target.y);
                     if (dist < target.size) {
-                        targetHit = true;
-                        target.hp -= 34;
+                        hitRegistered = true;
+                        target.hp -= 50;
                         if (target.hp <= 0) {
-                            handleTargetScore(target.x, target.y, `HOLOTROLL_${target.emoji}`);
+                            handleTargetSlapped(target.x, target.y, `消除 ${target.text}!`);
                             gameState.virtualTargets.splice(i, 1);
                         } else {
-                            handleTargetScore(target.x, target.y, "HIT!", false);
+                            handleTargetSlapped(target.x, target.y, `命中!`, false);
                         }
                         break;
                     }
                 }
             }
 
-            // Sub ammo
-            gameState.ammo = Math.max(0, gameState.ammo - 1);
-            updateAmmoHUD();
-            if (gameState.soundFX) SoundFX.playLaser();
-        });
-
-        // 2. Setting controls panel toggling
-        document.getElementById('btn-settings-toggle').addEventListener('click', (e) => {
-            const panel = document.getElementById('settings-panel');
-            if (panel.classList.contains('hidden')) {
-                panel.classList.remove('hidden');
+            if (hitRegistered) {
+                gameState.combo++;
+                showComboBadge();
             } else {
-                panel.classList.add('hidden');
+                gameState.combo = 0;
+                hideComboBadge();
             }
-        });
+        }
 
-        document.getElementById('btn-settings-close').addEventListener('click', () => {
-            document.getElementById('settings-panel').classList.add('hidden');
-        });
-
-        // 3. Modulators toggles binding
-        document.getElementById('toggle-tracking').addEventListener('change', (e) => {
-            gameState.faceTrackingEnabled = e.target.checked;
-        });
-
-        document.getElementById('toggle-virtual').addEventListener('change', (e) => {
-            gameState.simTargetsEnabled = e.target.checked;
-            if (!gameState.simTargetsEnabled) {
-                gameState.virtualTargets = [];
+        function handleTargetSlapped(tx, ty, tagText, isKill = true) {
+            SoundFX.playHit();
+            const spec = weaponSpecs[gameState.currentWeapon];
+            
+            // Generate colorful particles
+            for (let i = 0; i < spec.particleCount; i++) {
+                const ang = Math.random() * Math.PI * 2;
+                const sp = 4 + Math.random() * 6;
+                gameState.particles.push(new OfficeParticle(
+                    tx, ty, spec.color,
+                    Math.cos(ang) * sp, Math.sin(ang) * sp
+                ));
             }
-        });
 
-        document.getElementById('toggle-speak').addEventListener('change', (e) => {
-            gameState.soundSpeak = e.target.checked;
-        });
+            if (!isKill) return;
 
-        // Camera Flip Handler
-        document.getElementById('btn-camera-flip').addEventListener('click', async () => {
-            const nextMode = (gameState.currentFacingMode === 'environment') ? 'user' : 'environment';
-            const flipped = await startCamera(nextMode);
-            if (flipped) {
-                initFaceTracker();
+            // Compensation cash calculation
+            const baseGain = (200 + Math.floor(Math.random() * 200));
+            const multiplier = 1 + (gameState.combo * 0.15);
+            const reward = Math.floor(baseGain * multiplier);
+            gameState.score += reward;
+
+            document.getElementById('score-display').innerText = gameState.score.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('board-you-score').innerText = `$${gameState.score.toLocaleString('zh-TW')}`;
+
+            // Floating Slogans
+            const customInput = document.getElementById('custom-slogan').value || "立刻加薪！";
+            gameState.particles.push(new OfficeParticle(tx, ty - 25, '#fbbf24', 0, -2, customInput));
+
+            triggerVoiceSlogan();
+            updateRankHUD();
+        }
+
+        function updateRankHUD() {
+            let activeText = slackerRanks[0].text;
+            for (let i = slackerRanks.length - 1; i >= 0; i--) {
+                if (gameState.score >= slackerRanks[i].min) {
+                    activeText = slackerRanks[i].text;
+                    break;
+                }
             }
-        });
+            document.getElementById('rank-display').innerText = activeText;
+        }
 
-        // Weapon swaying lag on orientation/touch moves
-        window.addEventListener('mousemove', (e) => {
-            // Weapon swaying inertia simulation
-            const intensity = 0.08;
-            gameState.weaponSwayX = -(e.clientX - window.innerWidth / 2) * intensity;
-            gameState.weaponSwayY = -(e.clientY - window.innerHeight / 2) * intensity;
-        });
+        function triggerBustedAndCaught() {
+            gameState.isBusted = true;
+            gameState.combo = 0;
+            hideComboBadge();
+            SoundFX.playBusted();
 
-        window.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                const t = e.touches[0];
-                const intensity = 0.08;
-                gameState.weaponSwayX = -(t.clientX - window.innerWidth / 2) * intensity;
-                gameState.weaponSwayY = -(t.clientY - window.innerHeight / 2) * intensity;
-            }
+            const screenFlash = document.getElementById('screen-caught-flash');
+            screenFlash.classList.add('caught-active');
+            setTimeout(() => screenFlash.classList.remove('caught-active'), 1000);
+
+            // Deduct compensation as punishment
+            gameState.score = Math.max(0, gameState.score - 2000);
+            document.getElementById('score-display').innerText = gameState.score.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            document.getElementById('caught-overlay').classList.remove('hidden');
+        }
+
+        function resumeSlacking() {
+            document.getElementById('caught-overlay').classList.add('hidden');
+            gameState.isBusted = false;
+            gameState.bossState = 'BACK';
+            gameState.bossStateTimer = 3.5;
+            updateBossHUD();
+        }
+
+        function showComboBadge() {
+            const badge = document.getElementById('combo-badge');
+            document.getElementById('combo-text').innerText = `${gameState.combo} 連斬!`;
+            badge.style.transform = 'scale(1.1)';
+            
+            clearTimeout(gameState.comboTimer);
+            gameState.comboTimer = setTimeout(() => {
+                gameState.combo = 0;
+                hideComboBadge();
+            }, 3000);
+        }
+
+        function hideComboBadge() {
+            document.getElementById('combo-badge').style.transform = 'scale(0)';
+        }
+    </script>
+
+    <script>
+        // --- MOBILE GESTURE & BUTTON HANDLERS ---
+        window.addEventListener('load', () => {
+            // Simulated loading progression steps
+            setTimeout(() => {
+                const s1 = document.getElementById('step-1');
+                s1.innerHTML = `<i class="fa-solid fa-check text-green-500"></i> 反骨精神引擎調用完成`;
+                s1.className = "flex items-center gap-2 text-green-400";
+            }, 500);
+
+            setTimeout(() => {
+                const s2 = document.getElementById('step-2');
+                s2.innerHTML = `<i class="fa-solid fa-check text-green-500"></i> 手機 Safe Area 整合配置完成`;
+                s2.className = "flex items-center gap-2 text-green-400";
+                s2.style.opacity = '1';
+            }, 1000);
+
+            setTimeout(() => {
+                const s3 = document.getElementById('step-3');
+                s3.innerHTML = `<i class="fa-solid fa-check text-green-500"></i> AR 前置感應器綁定就緒`;
+                s3.className = "flex items-center gap-2 text-green-400";
+                s3.style.opacity = '1';
+            }, 1500);
+
+            // Bind touch triggers for giant chop action
+            const chopBtn = document.getElementById('btn-chop');
+            chopBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                initAudio();
+                performChopAction();
+            }, { passive: false });
+
+            // Allow clicking/tapping directly on the viewfinder to chop target
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                initAudio();
+                if (e.touches.length > 0) {
+                    const touch = e.touches[0];
+                    const rect = canvas.getBoundingClientRect();
+                    const tx = touch.clientX - rect.left;
+                    const ty = touch.clientY - rect.top;
+                    performChopAction(tx, ty);
+                }
+            }, { passive: false });
+
+            // Sliding UI Drawer controls
+            const settingsBtn = document.getElementById('btn-settings-toggle');
+            const settingsPanel = document.getElementById('settings-panel');
+            const settingsCloseBtn = document.getElementById('btn-settings-close');
+
+            settingsBtn.addEventListener('click', () => {
+                settingsPanel.classList.toggle('drawer-open');
+            });
+            settingsCloseBtn.addEventListener('click', () => {
+                settingsPanel.classList.remove('drawer-open');
+            });
+
+            // Checkbox configs linkages
+            document.getElementById('toggle-tracking').addEventListener('change', (e) => {
+                gameState.faceTrackingEnabled = e.target.checked;
+                if (!e.target.checked) gameState.faces = [];
+            });
+            document.getElementById('toggle-virtual').addEventListener('change', (e) => {
+                gameState.simTargetsEnabled = e.target.checked;
+                if (!e.target.checked) gameState.virtualTargets = [];
+            });
+            document.getElementById('toggle-speak').addEventListener('change', (e) => {
+                gameState.soundSpeak = e.target.checked;
+            });
+            document.getElementById('toggle-audio').addEventListener('change', (e) => {
+                gameState.soundFX = e.target.checked;
+            });
+
+            // Camera toggle
+            document.getElementById('btn-camera-flip').addEventListener('click', () => {
+                const nextMode = gameState.currentFacingMode === 'user' ? 'environment' : 'user';
+                startCamera(nextMode).then(success => {
+                    if (success) initFaceTracker();
+                });
+            });
+
+            // Swipe to change weapon gesture on mobile
+            window.addEventListener('touchstart', (e) => {
+                gameState.touchStartX = e.touches[0].clientX;
+                gameState.touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            window.addEventListener('touchend', (e) => {
+                if (!gameState.touchStartX || !gameState.touchStartY) return;
+
+                const diffX = e.changedTouches[0].clientX - gameState.touchStartX;
+                const diffY = e.changedTouches[0].clientY - gameState.touchStartY;
+
+                // Detect horizontal swipe
+                if (Math.abs(diffX) > 60 && Math.abs(diffY) < 40) {
+                    const weapons = ['cardboard', 'leek', 'hammer'];
+                    let idx = weapons.indexOf(gameState.currentWeapon);
+                    if (diffX > 0) {
+                        // Swipe Right
+                        idx = (idx - 1 + weapons.length) % weapons.length;
+                    } else {
+                        // Swipe Left
+                        idx = (idx + 1) % weapons.length;
+                    }
+                    selectWeapon(weapons[idx]);
+                }
+                gameState.touchStartX = 0;
+                gameState.touchStartY = 0;
+            }, { passive: true });
+
+            // Initialize Camera options on Permission grant button
+            document.getElementById('btn-grant-permission').addEventListener('click', () => {
+                initAudio();
+                document.getElementById('loading-overlay').classList.add('hidden');
+                startCamera('user').then(success => {
+                    if (success) initFaceTracker();
+                });
+            });
+
+            // Fallback Skip
+            document.getElementById('btn-skip-camera').addEventListener('click', () => {
+                initAudio();
+                document.getElementById('loading-overlay').classList.add('hidden');
+                document.getElementById('fallback-bg').style.opacity = '0.35';
+                gameState.faceTrackingEnabled = false;
+                document.getElementById('toggle-tracking').checked = false;
+            });
+
+            // Start loop animation
+            requestAnimationFrame(mainLoop);
         });
     </script>
 </body>
