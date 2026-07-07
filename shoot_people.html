@@ -6,11 +6,14 @@
     <title>每日一斬！直到主管發現 (Mobile FPS Edition)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts for arcade and comic style -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800;900&family=ZCOOL+KuaiLe&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
+
     <style>
         body {
             font-family: 'Inter', -apple-system, sans-serif;
@@ -30,13 +33,13 @@
         /* Interactive feedback animations */
         @keyframes chop-swing {
             0% { transform: rotate(0deg) translate(0px, 0px) scale(1); }
-            15% { transform: rotate(-45deg) translate(-20px, -20px) scale(1.1); }
-            30% { transform: rotate(90deg) translate(-50px, 70px) scale(0.85); }
-            70% { transform: rotate(10deg) translate(-10px, 15px) scale(0.95); }
+            15% { transform: rotate(-45deg) translate(-20px, -20px) scale(1.15); }
+            30% { transform: rotate(100deg) translate(-60px, 80px) scale(0.8); }
+            70% { transform: rotate(15deg) translate(-10px, 15px) scale(0.95); }
             100% { transform: rotate(0deg) translate(0px, 0px) scale(1); }
         }
         .chop-animation {
-            animation: chop-swing 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: chop-swing 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         @keyframes screen-red-flash {
@@ -61,14 +64,9 @@
             border-radius: 99px;
         }
     </style>
-
-    <!-- Tracking.js for face detection -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
 </head>
 <body class="relative w-screen h-[100dvh] overflow-hidden text-white flex flex-col justify-between">
 
-    <!-- The master viewport container - perfectly bound to mobile screen -->
     <div id="game-container" class="absolute inset-0 w-full h-full z-0 overflow-hidden bg-slate-950">
         <!-- Background camera stream -->
         <video id="video-feed" class="absolute inset-0 w-full h-full object-cover pointer-events-none z-0" autoplay playsinline muted loop></video>
@@ -84,7 +82,6 @@
         <div id="fallback-bg" class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center filter blur-md opacity-20 pointer-events-none transition-opacity duration-500"></div>
     </div>
 
-    <!-- HUD Header: Configured with padding matching dynamic island and notches -->
     <header class="relative z-30 w-full px-4 pt-[env(safe-area-inset-top,16px)] pb-2 flex flex-col gap-1.5 pointer-events-none select-none">
         <div class="w-full flex justify-between items-center gap-2">
             <!-- Left Panel: Compensation Earned -->
@@ -130,7 +127,6 @@
         </div>
     </header>
 
-    <!-- Tactical Target HUD Alignment -->
     <main class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
         <div id="crosshair-system" class="relative w-28 h-28 flex items-center justify-center transition-all duration-150">
             <!-- Dotted ring spinning -->
@@ -149,37 +145,25 @@
         </div>
     </main>
 
-    <!-- Large, Responsive Bottom-Right Weapon Viewport -->
     <div id="weapon-viewport" class="absolute bottom-[100px] right-0 w-[45%] max-w-[180px] aspect-square pointer-events-none z-20 flex items-end justify-end overflow-visible select-none pb-2 pr-2">
         <div id="weapon-holder" class="relative origin-bottom-right select-none transition-transform duration-75">
             <svg id="weapon-svg" class="w-full h-full drop-shadow-[0_8px_12px_rgba(0,0,0,0.8)]" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Wrapper for dynamic switching -->
                 <g id="weapon-graphics-container">
-                    <!-- Default: CARDBOARD KATANA -->
-                    <g id="weapon-cardboard">
-                        <rect x="210" y="210" width="25" height="70" rx="3" transform="rotate(45, 210, 210)" fill="#78350f" stroke="#451a03" stroke-width="2.5"/>
-                        <line x1="215" y1="230" x2="255" y2="190" stroke="#f59e0b" stroke-width="2"/>
-                        <ellipse cx="205" cy="205" rx="16" ry="8" transform="rotate(45, 205, 205)" fill="#1e293b" stroke="#0f172a" stroke-width="2.5"/>
-                        <path d="M200 200 L50 50 L35 65 L170 215 Z" fill="#d97706" stroke="#b45309" stroke-width="2.5"/>
-                        <path d="M190 190 L60 60" stroke="#b45309" stroke-width="1" stroke-dasharray="3 3"/>
-                        <rect x="95" y="95" width="16" height="30" rx="1.5" transform="rotate(15, 95, 95)" fill="#cbd5e1" fill-opacity="0.8"/>
-                        <path d="M50 50 L35 65" stroke="#fef08a" stroke-width="2"/>
-                    </g>
+                    <!-- Dynamic weapon graphics will render here -->
                 </g>
             </svg>
         </div>
     </div>
 
-    <!-- Mobile Bottom Safe Controls Layer -->
     <footer class="relative z-30 w-full px-4 pb-[env(safe-area-inset-bottom,16px)] pt-2 bg-gradient-to-t from-black via-black/60 to-transparent flex flex-col gap-3.5 items-center mt-auto">
-        <!-- Carousel indicators and swipe instructions -->
+        <!-- Swipe indicator -->
         <div class="text-[8px] text-gray-400 tracking-widest uppercase opacity-70 pointer-events-none flex items-center gap-1">
-            <i class="fa-solid fa-left-right animate-pulse"></i> 左右滑動或點選切換整頓武器
+            <i class="fa-solid fa-left-right animate-pulse"></i> 左右滑動螢幕 或 點選切換整頓武器
         </div>
 
         <!-- Touch optimized Weapon Selector Carousel -->
         <div class="w-full max-w-sm flex justify-around bg-black/80 backdrop-blur-md p-1 rounded-2xl border border-white/10 shadow-lg">
-            <button onclick="selectWeapon('cardboard')" id="wpn-cardboard-btn" class="wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl bg-rose-600/20 text-rose-400 border border-rose-500/30 text-[10px] font-extrabold transition-all">
+            <button onclick="selectWeapon('cardboard')" id="wpn-cardboard-btn" class="wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl text-gray-400 border border-transparent text-[10px] font-extrabold transition-all">
                 <i class="fa-solid fa-box-open text-xs mb-0.5"></i>
                 <span>紙板神劍</span>
             </button>
@@ -189,13 +173,13 @@
             </button>
             <button onclick="selectWeapon('hammer')" id="wpn-hammer-btn" class="wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl text-gray-400 border border-transparent text-[10px] font-extrabold transition-all">
                 <i class="fa-solid fa-gavel text-xs mb-0.5"></i>
-                <span>尖叫神槌</span>
+                <span>充氣槌</span>
             </button>
         </div>
 
         <!-- Big Trigger Button row -->
         <div class="w-full max-w-sm flex items-center justify-between gap-3">
-            <!-- Dynamic Weapon Heat/Overload Dial -->
+            <!-- Weapon heat indicator -->
             <div class="flex flex-col bg-black/65 p-2 rounded-xl border border-gray-800 w-24">
                 <span class="text-[8px] text-gray-500 font-black uppercase tracking-wider">砍擊效率</span>
                 <span id="weapon-status" class="text-[10px] font-black text-rose-500 meme-font mt-0.5">可揮斬</span>
@@ -213,7 +197,6 @@
         </div>
     </footer>
 
-    <!-- Bottom sliding settings drawer panel -->
     <div id="settings-panel" class="absolute bottom-0 inset-x-0 z-40 bg-slate-950 rounded-t-3xl border-t border-rose-500/30 p-5 shadow-[0_-10px_35px_rgba(0,0,0,0.9)] flex flex-col gap-4 transform translate-y-full transition-transform duration-300">
         <div class="w-full flex justify-between items-center border-b border-gray-900 pb-2.5">
             <span class="meme-font text-rose-400 font-black text-sm flex items-center gap-1.5">
@@ -228,23 +211,23 @@
                 <i class="fa-solid fa-comment-dots text-yellow-500"></i> 自定義反骨整頓口號 (Punchline):
             </label>
             <input type="text" id="custom-slogan" value="立刻加薪！" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-yellow-400 focus:outline-none focus:border-rose-500 font-bold">
-            <p class="text-[9px] text-gray-500 leading-relaxed">當砍中螢幕中的真人或辦公室怨念物時，此抗議字句會從目標臉部彈射蹦出！</p>
+            <p class="text-[9px] text-gray-500 leading-relaxed">當揮砍命中螢幕中的真人臉部或辦公室怨念物時，此詞句會以漫畫大字彈出！</p>
         </div>
 
         <!-- Configuration Option Checklist -->
         <div class="grid grid-cols-2 gap-2 max-h-[30vh] overflow-y-auto pr-1">
             <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-gray-200">實時真人 AR 偵測</span>
-                    <span class="text-[8px] text-gray-500">探測臉部進行貼圖</span>
+                    <span class="text-[10px] font-bold text-gray-200">實時人臉 AR 偵測</span>
+                    <span class="text-[8px] text-gray-500">輕量化本地追蹤器</span>
                 </div>
                 <input type="checkbox" id="toggle-tracking" class="accent-rose-500 w-4 h-4 rounded" checked>
             </div>
 
             <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-gray-200">辦公室虛擬目標</span>
-                    <span class="text-[8px] text-gray-500">生成 KPI、週報 PPT</span>
+                    <span class="text-[10px] font-bold text-gray-200">辦公室怨念物</span>
+                    <span class="text-[8px] text-gray-500">虛擬 KPI 與週報</span>
                 </div>
                 <input type="checkbox" id="toggle-virtual" class="accent-amber-500 w-4 h-4 rounded" checked>
             </div>
@@ -252,15 +235,15 @@
             <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
                 <div class="flex flex-col">
                     <span class="text-[10px] font-bold text-gray-200">語音大聲咆哮</span>
-                    <span class="text-[8px] text-gray-500">砍中時發出抗議音頻</span>
+                    <span class="text-[8px] text-gray-500">擊中時自動 TTS 朗讀</span>
                 </div>
                 <input type="checkbox" id="toggle-speak" class="accent-yellow-500 w-4 h-4 rounded" checked>
             </div>
 
             <div class="flex justify-between items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
                 <div class="flex flex-col">
-                    <span class="text-[10px] font-bold text-gray-200">辦公室搞怪音效</span>
-                    <span class="text-[8px] text-gray-500">擊中及警告通知音效</span>
+                    <span class="text-[10px] font-bold text-gray-200">復古整頓音效</span>
+                    <span class="text-[8px] text-gray-500">超低延遲合成聲效</span>
                 </div>
                 <input type="checkbox" id="toggle-audio" class="accent-rose-500 w-4 h-4 rounded" checked>
             </div>
@@ -282,7 +265,6 @@
         </div>
     </div>
 
-    <!-- Busted by Boss Screen Overlay -->
     <div id="caught-overlay" class="absolute inset-0 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-opacity duration-300 hidden">
         <div class="text-center p-6 max-w-sm flex flex-col items-center gap-4 border border-red-500/40 rounded-3xl bg-slate-900 shadow-2xl mx-4">
             <div class="w-14 h-14 bg-red-600 rounded-full flex items-center justify-center text-white text-2xl animate-bounce">
@@ -290,11 +272,11 @@
             </div>
             <h2 class="meme-font text-xl font-black text-red-500 tracking-widest animate-pulse">遭 主 管 逮 捕！</h2>
             <p class="text-xs text-gray-300 leading-relaxed px-2">
-                你在主管轉身探頭時大肆砍劈！主管發現你在摸魚！你被嚴厲批評，並扣減了大量的精神損害補償費。
+                你在主管轉身朝你看來的時候大肆揮擊！當場被認定在摸魚。扣除大量辛苦累積的精神損失補償金。
             </p>
             <div class="w-full bg-slate-950 p-3 rounded-xl border border-red-500/20 font-mono text-[10px] text-red-400 flex flex-col gap-1">
                 <div class="flex justify-between"><span>精神補償損失:</span> <span class="font-extrabold">-$2,000.00</span></div>
-                <div class="flex justify-between"><span>主管警告次數:</span> <span class="font-bold text-yellow-500">HR WARNING +1</span></div>
+                <div class="flex justify-between"><span>HR 警告次數:</span> <span class="font-bold text-yellow-500">WARNING +1</span></div>
             </div>
             <button onclick="resumeSlacking()" class="w-full py-3 bg-red-600 active:scale-95 text-white font-extrabold rounded-xl transition-all shadow-md uppercase tracking-wider text-xs meme-font">
                 重新偷偷整頓職場
@@ -302,7 +284,6 @@
         </div>
     </div>
 
-    <!-- Loading screen with permission and configuration settings -->
     <div id="loading-overlay" class="absolute inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center gap-5 p-6">
         <div class="relative w-28 h-28 flex items-center justify-center">
             <div class="absolute inset-0 border-t-2 border-b-2 border-rose-500 rounded-full animate-spin [animation-duration:1.2s]"></div>
@@ -312,12 +293,12 @@
         
         <div class="text-center flex flex-col gap-2 max-w-sm">
             <h1 class="meme-font text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-rose-500 to-amber-400">每日一斬！直到主管發現</h1>
-            <p class="text-[10px] text-rose-400/80 font-mono tracking-widest uppercase">手機相容生存系統初始化...</p>
+            <p class="text-[10px] text-rose-400/80 font-mono tracking-widest uppercase">超精準 tracking.js AR 追蹤系統部署中...</p>
             
             <div class="mt-2 p-3 rounded-xl bg-slate-900 border border-slate-800 text-left text-[10px] font-mono text-gray-400 flex flex-col gap-1.5">
-                <div id="step-1" class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin text-rose-500"></i> 加載反骨精神引擎...</div>
-                <div id="step-2" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[6px]"></i> 整合手機 Safe Area 配置...</div>
-                <div id="step-3" class="flex items-center gap-2 opacity-30"><i class="fa-solid fa-circle text-[6px]"></i> 調試 AR 臉部探測儀...</div>
+                <div id="step-1" class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> tracking.js 前端引擎載入成功...</div>
+                <div id="step-2" class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> 手機視角 Safe Area 配置完畢...</div>
+                <div id="step-3" class="flex items-center gap-2"><i class="fa-solid fa-spinner animate-spin text-rose-500"></i> 等待啟用相機...</div>
             </div>
 
             <!-- Permission prompt -->
@@ -332,7 +313,6 @@
     </div>
 
     <script>
-        // --- MOBILE-LATENCY retro sound generator (Web Audio API) ---
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
 
@@ -354,9 +334,9 @@
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(700, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.15);
@@ -369,9 +349,9 @@
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(220, audioCtx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(45, audioCtx.currentTime + 0.12);
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.12);
@@ -384,53 +364,64 @@
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                osc.frequency.linearRampToValueAtTime(1500, audioCtx.currentTime + 0.08);
-                osc.frequency.linearRampToValueAtTime(400, audioCtx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(500, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(1300, audioCtx.currentTime + 0.08);
+                osc.frequency.linearRampToValueAtTime(500, audioCtx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                 gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                 osc.start();
                 osc.stop(audioCtx.currentTime + 0.15);
             },
+            playSlap() {
+                initAudio();
+                if (!audioCtx || !gameState.soundFX) return;
+                const bufferSize = audioCtx.sampleRate * 0.12;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(900, audioCtx.currentTime);
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.45, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start();
+            },
             playAlert() {
                 initAudio();
                 if (!audioCtx || !gameState.soundFX) return;
-                const playBeep = (delay, freq, duration) => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + delay);
-                    gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + delay + duration);
-                    osc.start(audioCtx.currentTime + delay);
-                    osc.stop(audioCtx.currentTime + delay + duration);
-                };
-                playBeep(0, 880, 0.08);
-                playBeep(0.1, 1050, 0.12);
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(950, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
             },
             playBusted() {
                 initAudio();
                 if (!audioCtx || !gameState.soundFX) return;
-                const osc1 = audioCtx.createOscillator();
-                const osc2 = audioCtx.createOscillator();
+                const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc1.connect(gain);
-                osc2.connect(gain);
+                osc.connect(gain);
                 gain.connect(audioCtx.destination);
-                osc1.type = 'sawtooth';
-                osc2.type = 'square';
-                osc1.frequency.setValueAtTime(120, audioCtx.currentTime);
-                osc2.frequency.setValueAtTime(122, audioCtx.currentTime);
-                osc1.frequency.linearRampToValueAtTime(60, audioCtx.currentTime + 0.5);
-                osc2.frequency.linearRampToValueAtTime(61, audioCtx.currentTime + 0.5);
-                gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                osc1.start();
-                osc2.start();
-                osc1.stop(audioCtx.currentTime + 0.5);
-                osc2.stop(audioCtx.currentTime + 0.5);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(45, audioCtx.currentTime + 0.6);
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.6);
             }
         };
 
@@ -440,17 +431,16 @@
                 window.speechSynthesis.cancel();
                 const customText = document.getElementById('custom-slogan').value || "立刻加薪！";
                 const utterance = new SpeechSynthesisUtterance(customText);
-                utterance.rate = 1.3;
-                utterance.pitch = 1.4;
+                utterance.rate = 1.35;
+                utterance.pitch = 1.45;
                 window.speechSynthesis.speak(utterance);
             } catch (e) {
-                console.warn("Speech synthesis error.");
+                console.warn("Speech synthesis is blocked or unsupported.");
             }
         }
     </script>
 
     <script>
-        // --- CORE STATE MANAGEMENT ---
         const gameState = {
             score: 0,
             combo: 0,
@@ -461,7 +451,7 @@
             soundFX: true,
             faceTrackingEnabled: true,
             simTargetsEnabled: true,
-            currentFacingMode: 'user', // Default to 'user' for perfect selfie mirroring prank
+            currentFacingMode: 'user', // 'user' represents selfie cam for ideal face tracking
             faces: [],
             virtualTargets: [],
             particles: [],
@@ -470,15 +460,14 @@
             isChopping: false,
             weaponHeat: 0,
             cameraStream: null,
-            trackingTask: null,
             lastFrameTime: performance.now(),
             
-            // Boss states: 'BACK' (Safe), 'ALERT' (Be Careful), 'LOOKING' (Danger!)
+            // Boss states: 'BACK' (Safe), 'ALERT' (Slightly Suspicious), 'LOOKING' (Extremely Danger!)
             bossState: 'BACK',
             bossStateTimer: 3.5,
             isBusted: false,
 
-            // Gesture tracking variables
+            // Swipe interactions
             touchStartX: 0,
             touchStartY: 0
         };
@@ -491,7 +480,7 @@
         const weaponSpecs = {
             cardboard: { color: '#fb923c', text: '紙板神劍', particleCount: 15 },
             leek: { color: '#4ade80', text: '整頓大蔥', particleCount: 20 },
-            hammer: { color: '#f43f5e', text: '尖叫神槌', particleCount: 25 }
+            hammer: { color: '#f43f5e', text: '充氣槌', particleCount: 25 }
         };
 
         const slackerRanks = [
@@ -502,7 +491,6 @@
             { min: 100000, text: "反骨薪資終結者" }
         ];
 
-        // Custom weapon dynamic SVG paths for quick switching on mobile
         const weaponSVGs = {
             cardboard: `
                 <g id="weapon-cardboard">
@@ -517,27 +505,19 @@
             `,
             leek: `
                 <g id="weapon-leek">
-                    <!-- The glorious Leek weapon -->
                     <rect x="195" y="195" width="28" height="65" rx="4" transform="rotate(45, 195, 195)" fill="#ffffff" stroke="#cbd5e1" stroke-width="2.5"/>
-                    <!-- Dark green leaves shooting out -->
                     <path d="M165 165 L45 45 L35 60 L145 180 Z" fill="#22c55e" stroke="#16a34a" stroke-width="2.5"/>
                     <path d="M150 150 L25 50 L15 65 L135 165 Z" fill="#15803d" stroke="#166534" stroke-width="2.5"/>
                     <path d="M170 170 L55 25 L45 35 L155 155 Z" fill="#4ade80" stroke="#22c55e" stroke-width="2.5"/>
                     <ellipse cx="195" cy="195" rx="14" ry="7" transform="rotate(45, 195, 195)" fill="#86efac" stroke="#22c55e" stroke-width="2"/>
-                    <!-- Comic sparkles -->
-                    <circle cx="80" cy="110" r="5" fill="#fef08a" />
-                    <circle cx="120" cy="70" r="3" fill="#fef08a" />
                 </g>
             `,
             hammer: `
                 <g id="weapon-hammer">
-                    <!-- Red Squeaky Hammer -->
                     <rect x="200" y="200" width="18" height="90" rx="4" transform="rotate(45, 200, 200)" fill="#fbbf24" stroke="#d97706" stroke-width="2.5"/>
                     <rect x="70" y="70" width="120" height="60" rx="14" transform="rotate(45, 70, 70)" fill="#ef4444" stroke="#b91c1c" stroke-width="2.5"/>
-                    <!-- Squeaky bellows on hammer heads -->
                     <rect x="135" y="60" width="20" height="40" rx="3" transform="rotate(45, 135, 60)" fill="#fca5a5" stroke="#ef4444" stroke-width="1.5"/>
                     <rect x="65" y="130" width="20" height="40" rx="3" transform="rotate(45, 65, 130)" fill="#fca5a5" stroke="#ef4444" stroke-width="1.5"/>
-                    <!-- Whimsical star sparkles -->
                     <path d="M140 180 L145 165 L160 160 L145 155 L140 140 L135 155 L120 160 L135 165 Z" fill="#fbbf24"/>
                 </g>
             `
@@ -547,7 +527,6 @@
             gameState.currentWeapon = wpnId;
             document.getElementById('weapon-graphics-container').innerHTML = weaponSVGs[wpnId];
             
-            // Visual indicators update
             document.querySelectorAll('.wpn-select-btn').forEach(btn => {
                 btn.className = "wpn-select-btn flex-1 py-1.5 flex flex-col items-center justify-center rounded-xl text-gray-400 border border-transparent text-[10px] font-extrabold transition-all";
             });
@@ -558,13 +537,13 @@
     </script>
 
     <script>
-        // --- MOBILE ADAPTIVE CAMERA CONTROLLERS ---
+        let trackerTask = null;
+
         async function startCamera(facingMode = 'user') {
             if (gameState.cameraStream) {
                 gameState.cameraStream.getTracks().forEach(track => track.stop());
             }
 
-            // Mobile optimized aspect ratio configurations
             const constraints = {
                 video: {
                     facingMode: facingMode,
@@ -580,7 +559,6 @@
                 video.srcObject = stream;
                 gameState.currentFacingMode = facingMode;
 
-                // Adjust mirror style depending on active camera orientation
                 if (facingMode === 'user') {
                     video.style.transform = 'scaleX(-1)';
                 } else {
@@ -590,35 +568,36 @@
                 document.getElementById('fallback-bg').style.opacity = '0';
                 return true;
             } catch (err) {
-                console.warn("Camera streaming blocked. Running in immersive holographic simulator mode.");
+                console.warn("Camera streaming blocked. Running in simulated slacking mode.");
                 document.getElementById('fallback-bg').style.opacity = '0.35';
                 return false;
             }
         }
 
         function initFaceTracker() {
-            if (gameState.trackingTask) {
-                gameState.trackingTask.stop();
+            if (trackerTask) {
+                trackerTask.stop();
             }
 
+            // tracking.js frontal face tracker - 100% offline, zero-latency on smartphones
             const tracker = new tracking.ObjectTracker('face');
-            tracker.setInitialScale(4.5);
-            tracker.setStepSize(2);
-            tracker.setEdgesDensity(0.12);
+            tracker.setInitialScale(2.5); // lower scale for better mobile sensitivity
+            tracker.setStepSize(1.5);
+            tracker.setEdgesDensity(0.1);
 
-            gameState.trackingTask = tracking.track('#video-feed', tracker);
             tracker.on('track', function(event) {
                 if (!gameState.faceTrackingEnabled) {
                     gameState.faces = [];
                     return;
                 }
-                gameState.faces = event.data;
+                gameState.faces = event.data || [];
             });
+
+            trackerTask = tracking.track(video, tracker);
         }
     </script>
 
     <script>
-        // --- OFFICE COMIC PARTICLES SYSTEM ---
         class OfficeParticle {
             constructor(x, y, color, vx, vy, text = '') {
                 this.x = x;
@@ -638,10 +617,10 @@
                 this.y += this.vy * dt * 60;
                 
                 if (this.text) {
-                    this.vy -= 0.15; // float upwards like anger
+                    this.vy -= 0.15; // floats upwards like office tension rising
                     this.alpha -= 0.02;
                 } else {
-                    this.vy += 0.22; // gravity pull for sparks
+                    this.vy += 0.22; // gravity drops for slash sparks
                     this.alpha -= 0.035;
                 }
                 
@@ -655,18 +634,17 @@
                 ctx.rotate(this.rotation);
 
                 if (this.text) {
-                    // Comic action explosion dialogue box
-                    ctx.font = '900 14px "ZCOOL KuaiLe", sans-serif';
+                    // Retro Comic Action dialogue box
+                    ctx.font = '900 15px "ZCOOL KuaiLe", sans-serif';
                     ctx.textAlign = 'center';
                     
-                    // Dark frame border
                     ctx.fillStyle = '#000000';
-                    ctx.fillText(this.text, 2, 2);
+                    ctx.fillText(this.text, 2, 2); // shadow
                     
                     ctx.fillStyle = this.color;
                     ctx.fillText(this.text, 0, 0);
                 } else {
-                    // Exploding colorful dots
+                    // Spark visual
                     ctx.fillStyle = this.color;
                     ctx.beginPath();
                     ctx.arc(0, 0, this.size, 0, Math.PI * 2);
@@ -676,7 +654,6 @@
             }
         }
 
-        // --- Corporate KPI & Overwork Targets ---
         const officeEmojis = ['📊', '📈', '📄', '⏰', '💼', '📧'];
         const officeLabels = ['週報 PPT', 'KPI 指標', '打卡報表', '加班申請', '畫大餅'];
 
@@ -704,24 +681,24 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
 
-                // Holographic brackets surrounding
+                // Holographic borders
                 ctx.strokeStyle = 'rgba(244, 63, 94, 0.5)';
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(-this.size/2 - 4, -this.size/2 - 4, this.size + 8, this.size + 8);
 
-                // HP indicator bar
+                // HP Indicator
                 ctx.fillStyle = 'rgba(0,0,0,0.7)';
                 ctx.fillRect(-this.size/2, -this.size/2 - 14, this.size, 4);
                 ctx.fillStyle = '#f43f5e';
                 ctx.fillRect(-this.size/2, -this.size/2 - 14, this.size * (this.hp / 100), 4);
 
-                // Label
+                // Target text label
                 ctx.font = 'bold 9px "ZCOOL KuaiLe", sans-serif';
                 ctx.fillStyle = '#fbcfe8';
                 ctx.textAlign = 'center';
                 ctx.fillText(this.text, 0, this.size / 2 + 10);
 
-                // Emoji
+                // Target Emoji representation
                 ctx.font = `${this.size - 12}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
@@ -733,40 +710,44 @@
     </script>
 
     <script>
-        // Adjust tracker coordinates to perfectly fit HTML5 overlay canvas size
-        function getCanvasSpaceCoords(rx, ry, rw, rh) {
-            const trackerW = 320;
-            const trackerH = 240;
+        // Maps video resolution coordinates accurately onto the canvas overlay space
+        function getCanvasSpaceCoords(face) {
             const canvasW = canvas.width;
             const canvasH = canvas.height;
-
-            const videoRatio = trackerW / trackerH;
-            const canvasRatio = canvasW / canvasH;
-
-            let scale, xOffset = 0, yOffset = 0;
-
-            if (canvasRatio > videoRatio) {
-                scale = canvasW / trackerW;
-                yOffset = (canvasH - trackerH * scale) / 2;
-            } else {
-                scale = canvasH / trackerH;
-                xOffset = (canvasW - trackerW * scale) / 2;
-            }
-
-            let finalX = rx * scale + xOffset;
+            
+            // Default webcam resolution or fallback
+            const vWidth = video.videoWidth || 640;
+            const vHeight = video.videoHeight || 480;
+            
+            // Object-cover calculations to stretch video to full viewport
+            const scale = Math.max(canvasW / vWidth, canvasH / vHeight);
+            const wScaled = vWidth * scale;
+            const hScaled = vHeight * scale;
+            
+            const xOffset = (canvasW - wScaled) / 2;
+            const yOffset = (canvasH - hScaled) / 2;
+            
+            // Map tracking.js video-space coordinates to canvas scale
+            const x = face.x * scale + xOffset;
+            const y = face.y * scale + yOffset;
+            const w = face.width * scale;
+            const h = face.height * scale;
+            
+            let finalX = x;
             if (gameState.currentFacingMode === 'user') {
-                finalX = canvasW - (finalX + rw * scale);
+                // Mirror mapping formula for selfie view
+                finalX = canvasW - x - w;
             }
-
+            
             return {
                 x: finalX,
-                y: ry * scale + yOffset,
-                w: rw * scale,
-                h: rh * scale
+                y: y,
+                w: w,
+                h: h
             };
         }
 
-        // Draw stickers / comedy accessories on face bounds
+        // Draw comedy overlay accessories on detected faces
         function drawFaceARStickers(mapped, index) {
             const px = mapped.x + mapped.w / 2;
             const py = mapped.y + mapped.h / 2;
@@ -776,40 +757,35 @@
             ctx.lineWidth = 2.5;
             ctx.strokeRect(mapped.x, mapped.y, mapped.w, mapped.h);
 
-            // Red warning text
+            // Red warning targeting label
             ctx.font = '900 10px "Orbitron", sans-serif';
             ctx.fillStyle = '#ffffff';
             ctx.fillText(`🚨 DETECTED_BOSS_${index+1}`, mapped.x, mapped.y - 10);
             ctx.restore();
 
-            // Place hilarious stickers on colleague faces dynamically
+            // Render comedic stamps on face
             ctx.save();
             ctx.font = `${mapped.w * 0.45}px Arial`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             if (gameState.currentWeapon === 'cardboard') {
-                // Classic ninja face shield
-                ctx.fillText('🥷', px, py - mapped.h * 0.5);
+                ctx.fillText('🥷', px, py - mapped.h * 0.5); // Cardboard ninja
             } else if (gameState.currentWeapon === 'leek') {
-                // Slicing master chef hat
-                ctx.fillText('👨‍🍳', px, py - mapped.h * 0.55);
+                ctx.fillText('👨‍🍳', px, py - mapped.h * 0.55); // Leek chef
             } else if (gameState.currentWeapon === 'hammer') {
-                // Vertigo dizziness stars
-                ctx.fillText('💫', px, py - mapped.h * 0.45);
+                ctx.fillText('💫', px, py - mapped.h * 0.45); // dizzy hammer hit
             }
             ctx.restore();
         }
     </script>
 
     <script>
-        // --- BOSS AI & WARNING ALERTS ---
         function handleBossTick(dt) {
             if (gameState.isBusted) return;
 
             gameState.bossStateTimer -= dt;
             if (gameState.bossStateTimer <= 0) {
-                const nextStateChoices = ['BACK', 'ALERT', 'LOOKING'];
                 let next = 'BACK';
 
                 if (gameState.bossState === 'BACK') {
@@ -856,12 +832,12 @@
             }
         }
 
-        // --- MAIN CANVAS RENDERING LOOP ---
+        // Main Rendering/Loop Engine
         function mainLoop(timestamp) {
             const dt = Math.min((timestamp - gameState.lastFrameTime) / 1000, 0.1);
             gameState.lastFrameTime = timestamp;
 
-            // Fit full width/height matching device dynamic sizes
+            // Fit full width/height matching device dynamically
             if (canvas.width !== container.clientWidth || canvas.height !== container.clientHeight) {
                 canvas.width = container.clientWidth;
                 canvas.height = container.clientHeight;
@@ -883,14 +859,14 @@
                 });
             }
 
-            // Real-time tracking overlay alignment check
+            // High accuracy locking check
             let targetAcquired = false;
             const crossX = canvas.width / 2;
             const crossY = canvas.height / 2;
 
             if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
                 gameState.faces.forEach((face, index) => {
-                    const mapped = getCanvasSpaceCoords(face.x, face.y, face.width, face.height);
+                    const mapped = getCanvasSpaceCoords(face);
                     drawFaceARStickers(mapped, index);
 
                     if (crossX >= mapped.x && crossX <= mapped.x + mapped.w &&
@@ -900,7 +876,7 @@
                 });
             }
 
-            // Lock on target feedback
+            // Check if virtual goals can be targeted
             if (!targetAcquired && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
                 gameState.virtualTargets.forEach(target => {
                     const dist = Math.hypot(crossX - target.x, crossY - target.y);
@@ -931,7 +907,7 @@
                 return isAlive;
             });
 
-            // Restore weapon kickback position
+            // Recover weapon kickback position
             gameState.weaponSwayX *= 0.8;
             gameState.weaponSwayY *= 0.8;
             document.getElementById('weapon-holder').style.transform = `translate(${gameState.weaponSwayX}px, ${gameState.weaponSwayY}px)`;
@@ -945,11 +921,10 @@
     </script>
 
     <script>
-        // --- CHOP TRIGGER & HIT SYSTEM ---
         function performChopAction(eventX = null, eventY = null) {
             if (gameState.isBusted) return;
 
-            // Prevent tapping if weapon is overloaded
+            // Check heat constraint
             if (gameState.weaponHeat >= 100) {
                 document.getElementById('weapon-status').innerText = "過熱中!";
                 return;
@@ -962,15 +937,17 @@
                 }, 1000);
             }
 
-            // Animate weapon swing
+            // Swing weapon animation
             const weaponSvg = document.getElementById('weapon-svg');
             weaponSvg.classList.remove('chop-animation');
-            void weaponSvg.offsetWidth;
+            void weaponSvg.offsetWidth; // trigger reflow
             weaponSvg.classList.add('chop-animation');
 
-            // Sound FX Choice
+            // Play sound matching weapon selection
             if (gameState.currentWeapon === 'hammer') {
                 SoundFX.playSqueak();
+            } else if (gameState.currentWeapon === 'leek') {
+                SoundFX.playSlap();
             } else {
                 SoundFX.playSlash();
             }
@@ -978,21 +955,21 @@
             gameState.weaponSwayX = -25;
             gameState.weaponSwayY = 20;
 
-            // Check if Boss caught you
+            // Busted check!
             if (gameState.bossState === 'LOOKING') {
                 triggerBustedAndCaught();
                 return;
             }
 
-            // Verify coordinates hit
             const clickX = eventX || (canvas.width / 2);
             const clickY = eventY || (canvas.height / 2);
             let hitRegistered = false;
 
+            // 1. Check real face hit
             if (gameState.faceTrackingEnabled && gameState.faces.length > 0) {
                 for (let i = 0; i < gameState.faces.length; i++) {
                     const face = gameState.faces[i];
-                    const mapped = getCanvasSpaceCoords(face.x, face.y, face.width, face.height);
+                    const mapped = getCanvasSpaceCoords(face);
                     if (clickX >= mapped.x && clickX <= mapped.x + mapped.w &&
                         clickY >= mapped.y && clickY <= mapped.y + mapped.h) {
                         
@@ -1003,6 +980,7 @@
                 }
             }
 
+            // 2. Check virtual target hit
             if (!hitRegistered && gameState.simTargetsEnabled && gameState.virtualTargets.length > 0) {
                 for (let i = gameState.virtualTargets.length - 1; i >= 0; i--) {
                     const target = gameState.virtualTargets[i];
@@ -1032,83 +1010,91 @@
 
         function handleTargetSlapped(tx, ty, tagText, isKill = true) {
             SoundFX.playHit();
+
+            // Reward compensation score
+            const baseGain = isKill ? 1200 : 400;
+            const comboMultiplier = 1 + (gameState.combo * 0.1);
+            const scoreAddition = baseGain * comboMultiplier;
+
+            gameState.score += scoreAddition;
+            updateScoreDisplay();
+
+            // Spark particles
             const spec = weaponSpecs[gameState.currentWeapon];
-            
-            // Generate colorful particles
             for (let i = 0; i < spec.particleCount; i++) {
-                const ang = Math.random() * Math.PI * 2;
-                const sp = 4 + Math.random() * 6;
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 3 + Math.random() * 8;
                 gameState.particles.push(new OfficeParticle(
-                    tx, ty, spec.color,
-                    Math.cos(ang) * sp, Math.sin(ang) * sp
+                    tx, ty,
+                    spec.color,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed
                 ));
             }
 
-            if (!isKill) return;
-
-            // Compensation cash calculation
-            const baseGain = (200 + Math.floor(Math.random() * 200));
-            const multiplier = 1 + (gameState.combo * 0.15);
-            const reward = Math.floor(baseGain * multiplier);
-            gameState.score += reward;
-
-            document.getElementById('score-display').innerText = gameState.score.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            document.getElementById('board-you-score').innerText = `$${gameState.score.toLocaleString('zh-TW')}`;
-
-            // Floating Slogans
-            const customInput = document.getElementById('custom-slogan').value || "立刻加薪！";
-            gameState.particles.push(new OfficeParticle(tx, ty - 25, '#fbbf24', 0, -2, customInput));
+            // Spawns retro text slogan
+            const customSlogan = document.getElementById('custom-slogan').value || "立刻加薪！";
+            gameState.particles.push(new OfficeParticle(
+                tx, ty - 20,
+                '#facc15',
+                (Math.random() - 0.5) * 3,
+                -1.5 - Math.random() * 2,
+                customSlogan
+            ));
 
             triggerVoiceSlogan();
-            updateRankHUD();
-        }
-
-        function updateRankHUD() {
-            let activeText = slackerRanks[0].text;
-            for (let i = slackerRanks.length - 1; i >= 0; i--) {
-                if (gameState.score >= slackerRanks[i].min) {
-                    activeText = slackerRanks[i].text;
-                    break;
-                }
-            }
-            document.getElementById('rank-display').innerText = activeText;
         }
 
         function triggerBustedAndCaught() {
             gameState.isBusted = true;
-            gameState.combo = 0;
-            hideComboBadge();
             SoundFX.playBusted();
-
-            const screenFlash = document.getElementById('screen-caught-flash');
-            screenFlash.classList.add('caught-active');
-            setTimeout(() => screenFlash.classList.remove('caught-active'), 1000);
-
-            // Deduct compensation as punishment
+            
+            // Deduct damages
             gameState.score = Math.max(0, gameState.score - 2000);
-            document.getElementById('score-display').innerText = gameState.score.toLocaleString('zh-TW', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            updateScoreDisplay();
 
-            document.getElementById('caught-overlay').classList.remove('hidden');
+            document.getElementById('screen-caught-flash').classList.add('caught-active');
+            
+            setTimeout(() => {
+                document.getElementById('caught-overlay').classList.remove('hidden');
+                document.getElementById('screen-caught-flash').classList.remove('caught-active');
+            }, 600);
         }
 
         function resumeSlacking() {
-            document.getElementById('caught-overlay').classList.add('hidden');
             gameState.isBusted = false;
             gameState.bossState = 'BACK';
             gameState.bossStateTimer = 3.5;
             updateBossHUD();
+            document.getElementById('caught-overlay').classList.add('hidden');
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('score-display').innerText = gameState.score.toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('board-you-score').innerText = `$${gameState.score.toLocaleString('zh-HK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            // Check new ranks
+            let currentRank = "職場實習生";
+            for (let i = slackerRanks.length - 1; i >= 0; i--) {
+                if (gameState.score >= slackerRanks[i].min) {
+                    currentRank = slackerRanks[i].text;
+                    break;
+                }
+            }
+            gameState.rank = currentRank;
+            document.getElementById('rank-display').innerText = currentRank;
         }
 
         function showComboBadge() {
             const badge = document.getElementById('combo-badge');
-            document.getElementById('combo-text').innerText = `${gameState.combo} 連斬!`;
-            badge.style.transform = 'scale(1.1)';
+            document.getElementById('combo-text').innerText = `${gameState.combo} 連砍!`;
+            badge.style.transform = 'scale(1)';
             
             clearTimeout(gameState.comboTimer);
             gameState.comboTimer = setTimeout(() => {
                 gameState.combo = 0;
                 hideComboBadge();
-            }, 3000);
+            }, 4500);
         }
 
         function hideComboBadge() {
@@ -1117,136 +1103,130 @@
     </script>
 
     <script>
-        // --- MOBILE GESTURE & BUTTON HANDLERS ---
-        window.addEventListener('load', () => {
-            // Simulated loading progression steps
-            setTimeout(() => {
-                const s1 = document.getElementById('step-1');
-                s1.innerHTML = `<i class="fa-solid fa-check text-green-500"></i> 反骨精神引擎調用完成`;
-                s1.className = "flex items-center gap-2 text-green-400";
-            }, 500);
+        // Settings Drawer toggling
+        document.getElementById('btn-settings-toggle').addEventListener('click', () => {
+            document.getElementById('settings-panel').classList.add('drawer-open');
+        });
+        document.getElementById('btn-settings-close').addEventListener('click', () => {
+            document.getElementById('settings-panel').classList.remove('drawer-open');
+        });
 
-            setTimeout(() => {
-                const s2 = document.getElementById('step-2');
-                s2.innerHTML = `<i class="fa-solid fa-check text-green-500"></i> 手機 Safe Area 整合配置完成`;
-                s2.className = "flex items-center gap-2 text-green-400";
-                s2.style.opacity = '1';
-            }, 1000);
+        // Config event mapping
+        document.getElementById('toggle-tracking').addEventListener('change', (e) => {
+            gameState.faceTrackingEnabled = e.target.checked;
+            if (!e.target.checked) gameState.faces = [];
+        });
+        document.getElementById('toggle-virtual').addEventListener('change', (e) => {
+            gameState.simTargetsEnabled = e.target.checked;
+            if (!e.target.checked) gameState.virtualTargets = [];
+        });
+        document.getElementById('toggle-speak').addEventListener('change', (e) => {
+            gameState.soundSpeak = e.target.checked;
+        });
+        document.getElementById('toggle-audio').addEventListener('change', (e) => {
+            gameState.soundFX = e.target.checked;
+        });
 
-            setTimeout(() => {
-                const s3 = document.getElementById('step-3');
-                s3.innerHTML = `<i class="fa-solid fa-check text-green-500"></i> AR 前置感應器綁定就緒`;
-                s3.className = "flex items-center gap-2 text-green-400";
-                s3.style.opacity = '1';
-            }, 1500);
+        // Giant chop button event listener (supports click/touch)
+        const chopBtn = document.getElementById('btn-chop');
+        chopBtn.addEventListener('click', () => performChopAction());
+        chopBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            performChopAction();
+        });
 
-            // Bind touch triggers for giant chop action
-            const chopBtn = document.getElementById('btn-chop');
-            chopBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                initAudio();
-                performChopAction();
-            }, { passive: false });
+        // Direct canvas tapping allows players to chop targets directly
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            performChopAction(e.clientX - rect.left, e.clientY - rect.top);
+        });
 
-            // Allow clicking/tapping directly on the viewfinder to chop target
-            canvas.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                initAudio();
-                if (e.touches.length > 0) {
-                    const touch = e.touches[0];
-                    const rect = canvas.getBoundingClientRect();
-                    const tx = touch.clientX - rect.left;
-                    const ty = touch.clientY - rect.top;
-                    performChopAction(tx, ty);
-                }
-            }, { passive: false });
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const rect = canvas.getBoundingClientRect();
+                performChopAction(e.touches[0].clientX - rect.left, e.touches[0].clientY - rect.top);
+            }
+        });
 
-            // Sliding UI Drawer controls
-            const settingsBtn = document.getElementById('btn-settings-toggle');
-            const settingsPanel = document.getElementById('settings-panel');
-            const settingsCloseBtn = document.getElementById('btn-settings-close');
-
-            settingsBtn.addEventListener('click', () => {
-                settingsPanel.classList.toggle('drawer-open');
-            });
-            settingsCloseBtn.addEventListener('click', () => {
-                settingsPanel.classList.remove('drawer-open');
-            });
-
-            // Checkbox configs linkages
-            document.getElementById('toggle-tracking').addEventListener('change', (e) => {
-                gameState.faceTrackingEnabled = e.target.checked;
-                if (!e.target.checked) gameState.faces = [];
-            });
-            document.getElementById('toggle-virtual').addEventListener('change', (e) => {
-                gameState.simTargetsEnabled = e.target.checked;
-                if (!e.target.checked) gameState.virtualTargets = [];
-            });
-            document.getElementById('toggle-speak').addEventListener('change', (e) => {
-                gameState.soundSpeak = e.target.checked;
-            });
-            document.getElementById('toggle-audio').addEventListener('change', (e) => {
-                gameState.soundFX = e.target.checked;
-            });
-
-            // Camera toggle
-            document.getElementById('btn-camera-flip').addEventListener('click', () => {
-                const nextMode = gameState.currentFacingMode === 'user' ? 'environment' : 'user';
-                startCamera(nextMode).then(success => {
-                    if (success) initFaceTracker();
-                });
-            });
-
-            // Swipe to change weapon gesture on mobile
-            window.addEventListener('touchstart', (e) => {
+        // Sliding left/right to switch slacker weapons
+        window.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
                 gameState.touchStartX = e.touches[0].clientX;
                 gameState.touchStartY = e.touches[0].clientY;
-            }, { passive: true });
+            }
+        }, { passive: true });
 
-            window.addEventListener('touchend', (e) => {
-                if (!gameState.touchStartX || !gameState.touchStartY) return;
-
+        window.addEventListener('touchend', (e) => {
+            if (e.changedTouches.length > 0) {
                 const diffX = e.changedTouches[0].clientX - gameState.touchStartX;
                 const diffY = e.changedTouches[0].clientY - gameState.touchStartY;
-
-                // Detect horizontal swipe
-                if (Math.abs(diffX) > 60 && Math.abs(diffY) < 40) {
-                    const weapons = ['cardboard', 'leek', 'hammer'];
-                    let idx = weapons.indexOf(gameState.currentWeapon);
+                
+                // Trigger swap on horizontal swipes
+                if (Math.abs(diffX) > 60 && Math.abs(diffY) < 50) {
+                    const wps = ['cardboard', 'leek', 'hammer'];
+                    let idx = wps.indexOf(gameState.currentWeapon);
                     if (diffX > 0) {
-                        // Swipe Right
-                        idx = (idx - 1 + weapons.length) % weapons.length;
+                        idx = (idx - 1 + wps.length) % wps.length; // Swipe Right
                     } else {
-                        // Swipe Left
-                        idx = (idx + 1) % weapons.length;
+                        idx = (idx + 1) % wps.length; // Swipe Left
                     }
-                    selectWeapon(weapons[idx]);
+                    selectWeapon(wps[idx]);
                 }
-                gameState.touchStartX = 0;
-                gameState.touchStartY = 0;
-            }, { passive: true });
+            }
+        }, { passive: true });
 
-            // Initialize Camera options on Permission grant button
-            document.getElementById('btn-grant-permission').addEventListener('click', () => {
-                initAudio();
-                document.getElementById('loading-overlay').classList.add('hidden');
-                startCamera('user').then(success => {
-                    if (success) initFaceTracker();
-                });
-            });
+        // Flipping CAMERA streams
+        document.getElementById('btn-camera-flip').addEventListener('click', async () => {
+            const nextMode = gameState.currentFacingMode === 'user' ? 'environment' : 'user';
+            const granted = await startCamera(nextMode);
+            if (granted) {
+                initFaceTracker();
+            }
+        });
 
-            // Fallback Skip
-            document.getElementById('btn-skip-camera').addEventListener('click', () => {
-                initAudio();
-                document.getElementById('loading-overlay').classList.add('hidden');
-                document.getElementById('fallback-bg').style.opacity = '0.35';
+        // Permissions and Initial Boot Logic
+        const initGameProcess = async (enableCamera) => {
+            initAudio();
+            document.getElementById('step-2').innerHTML = `<i class="fa-solid fa-check text-green-500"></i> 手機視角 Safe Area 配置完畢...`;
+            document.getElementById('step-3').innerHTML = `<i class="fa-solid fa-spinner animate-spin text-rose-500"></i> 開啟 AR 視訊流中...`;
+
+            let cameraOk = false;
+            if (enableCamera) {
+                cameraOk = await startCamera('user');
+            }
+
+            if (cameraOk) {
+                initFaceTracker();
+                document.getElementById('step-3').innerHTML = `<i class="fa-solid fa-check text-green-500"></i> 相機連線成功且已加載人臉偵測器`;
+            } else {
+                document.getElementById('step-3').innerHTML = `<i class="fa-solid fa-ban text-yellow-500"></i> 無相機模式（啟用畫大餅辦公室虛擬目標）`;
                 gameState.faceTrackingEnabled = false;
                 document.getElementById('toggle-tracking').checked = false;
-            });
+            }
 
-            // Start loop animation
-            requestAnimationFrame(mainLoop);
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                    // Ignite main animation frame loop
+                    requestAnimationFrame(mainLoop);
+                }, 400);
+            }, 800);
+        };
+
+        document.getElementById('btn-grant-permission').addEventListener('click', () => {
+            initGameProcess(true);
         });
+
+        document.getElementById('btn-skip-camera').addEventListener('click', () => {
+            initGameProcess(false);
+        });
+
+        // Initialize default weapon on boot
+        window.onload = () => {
+            selectWeapon('cardboard');
+        };
     </script>
 </body>
 </html>
